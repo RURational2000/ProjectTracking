@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 
 class NewProjectDialog extends StatefulWidget {
-  const NewProjectDialog({Key? key}) : super(key: key);
+  const NewProjectDialog({super.key});
 
   @override
   State<NewProjectDialog> createState() => _NewProjectDialogState();

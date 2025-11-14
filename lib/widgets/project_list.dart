@@ -4,7 +4,7 @@ import 'package:project_tracking/providers/tracking_provider.dart';
 import 'package:project_tracking/models/project.dart';
 
 class ProjectList extends StatelessWidget {
-  const ProjectList({Key? key}) : super(key: key);
+  const ProjectList({super.key});
 
   @override
   Widget build(BuildContext context) {
