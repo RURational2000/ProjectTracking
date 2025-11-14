@@ -6,7 +6,7 @@ import 'package:project_tracking/widgets/active_tracking_panel.dart';
 import 'package:project_tracking/widgets/new_project_dialog.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

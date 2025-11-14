@@ -23,10 +23,10 @@ class MyApp extends StatelessWidget {
   final FileLoggingService fileService;
   
   const MyApp({
-    Key? key,
+    super.key,
     required this.dbService,
     required this.fileService,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 
 class ActiveTrackingPanel extends StatefulWidget {
-  const ActiveTrackingPanel({Key? key}) : super(key: key);
+  const ActiveTrackingPanel({super.key});
 
   @override
   State<ActiveTrackingPanel> createState() => _ActiveTrackingPanelState();

@@ -1,5 +1,7 @@
-import 'package:sqflite/sqflite.dart';
+import 'dart:io';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:project_tracking/models/project.dart';
 import 'package:project_tracking/models/instance.dart';
 import 'package:project_tracking/models/note.dart';
@@ -16,11 +18,25 @@ class DatabaseService {
   }
 
   Future<void> initialize() async {
+    // Initialize FFI for desktop platforms (Windows, Linux, macOS)
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
     await database;
   }
 
   Future<Database> _initDatabase() async {
-    final dbPath = await getDatabasesPath();
+    String dbPath;
+    
+    // Get platform-appropriate database path
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      final appDir = await getApplicationDocumentsDirectory();
+      dbPath = appDir.path;
+    } else {
+      dbPath = await getDatabasesPath();
+    }
+    
     final path = join(dbPath, 'project_tracking.db');
 
     return await openDatabase(
