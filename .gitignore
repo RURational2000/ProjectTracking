@@ -30,10 +30,14 @@ migrate_working_dir/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
+.pub-preload-cache/
 .pub-cache/
 .pub/
-/build/
-/coverage/
+build/
+coverage/
+doc/api/
+generated_plugin_registrant.dart # For older Flutter versions, newer versions handle this differently
+version.json # For older Flutter versions, newer versions handle this differently
 
 # Symbolication related
 app.*.symbols
@@ -46,6 +50,15 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /android/build/
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/key.properties
+android/local.properties
+android/**/*.jks # Keystore files
+android/**/.cxx/
+android/**/GeneratedPluginRegistrant.java # For older Flutter versions, newer versions handle this differently
 
 # Windows build artifacts
 /windows/flutter/ephemeral/
@@ -64,6 +77,16 @@ app.*.map.json
 /ios/Pods/
 /ios/.symlinks/
 /ios/Flutter/.last_build_id
+ios/.symlinks/
+ios/Flutter/Generated.xcconfig
+ios/Pods/
+ios/DerivedData/
+ios/**/.xcworkspace/xcuserdata/
+ios/**/.xcodeproj/xcuserdata/
+ios/**/.sconsign.dblite
+ios/**/.tags*
+ios/**/.vagrant/
+ios/**/xcuserdata/
 
 # Web build artifacts
 /web/
@@ -72,6 +95,9 @@ app.*.map.json
 *.g.dart
 *.freezed.dart
 *.mocks.dart
+
+# VS Code specific
+.vscode/
 
 # Environment files
 .env
