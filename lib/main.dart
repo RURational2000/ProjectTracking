@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:project_tracking/services/database_service.dart';
 import 'package:project_tracking/services/file_logging_service.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
@@ -7,6 +9,12 @@ import 'package:project_tracking/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize sqflite for desktop platforms
+  if (Platform.isWindows || Platform.isLinux) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   
   // Initialize services
   final dbService = DatabaseService();
@@ -23,10 +31,10 @@ class MyApp extends StatelessWidget {
   final FileLoggingService fileService;
   
   const MyApp({
-    Key? key,
+    super.key,
     required this.dbService,
     required this.fileService,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
