@@ -93,3 +93,15 @@ flutter build windows
 # iOS (requires macOS)
 flutter build ios
 ```
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on how to:
+- Set up your development environment
+- Create and submit pull requests
+- Follow code quality standards
+- Test your changes
+
+## License
+
+This project is open source. Please check the repository for license details.
