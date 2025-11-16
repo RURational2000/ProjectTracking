@@ -30,6 +30,17 @@ A cross-platform time tracking application for managing projects with instance-b
 ## Project Structure
 
 ```
+.gitignore - files and folders to ignore, including build, auto-generated, and deployment items
+README.md - main instructions for the app
+pubspec.yaml - flutter configuration file
+.dart_tool - local repository of tools and dependencies used by the flutter pub command
+.git_hub - workflows and git hub specific instructions
+.idea - folder containing android development studio artifacts; needed for development
+android - gradle build items
+ios - iOs xcode build items
+windows - build items for windows
+linux - build items for linux
+test - container Project Tracking unit tests
 lib/
 ├── main.dart                          # App initialization with service setup
 ├── models/                            # Data models (Project, Instance, Note)
