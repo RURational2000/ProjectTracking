@@ -34,10 +34,10 @@ A cross-platform time tracking application for managing projects with instance-b
 README.md - main instructions for the app
 pubspec.yaml - flutter configuration file
 .dart_tool - local repository of tools and dependencies used by the flutter pub command
-.git_hub - workflows and git hub specific instructions
+.github - workflows and git hub specific instructions
 .idea - folder containing android development studio artifacts; needed for development
 android - gradle build items
-ios - iOs xcode build items
+ios - iOS xcode build items
 windows - build items for windows
 linux - build items for linux
 test - container Project Tracking unit tests
