@@ -78,6 +78,8 @@ android/**/GeneratedPluginRegistrant.* # For older Flutter versions, newer versi
 /ios/Pods/
 /ios/.symlinks/
 /ios/Flutter/.last_build_id
+/ios/Runner/GeneratedPluginRegistrant.m
+/ios/Runner/GeneratedPluginRegistrant.h
 ios/.symlinks/
 ios/Flutter/Generated.xcconfig
 ios/Pods/
