@@ -52,11 +52,10 @@ Flutter Apps → Internet → Azure SQL Database
 - TEXT (ISO8601 dates) → DATETIME2
 ```
 
-### 2. Application Architecture
-- Create abstract `DatabaseService` interface
-- Implement `MssqlDatabaseService` alongside existing `SqliteDatabaseService`
-- Add configuration to switch between database backends
-- Implement connection pooling for network access
+### 2. Application Code
+- Replace SQLite database service with MSSQL database service
+- Add `mssql_connection` package dependency
+- Configure connection parameters for MSSQL
 
 ### 3. Security & Access
 - Configure OpenVPN for secure remote access
@@ -73,19 +72,8 @@ Flutter Apps → Internet → Azure SQL Database
 
 1. ✅ Review and approve this recommendation
 2. ⏳ Set up development environment with SQL Server Express
-3. ⏳ Implement database abstraction layer
-4. ⏳ Develop MSSQL database service implementation
-5. ⏳ Create data migration tools
-6. ⏳ Test and deploy
-
-## Alternative: Supabase
-
-If ease of setup is more important than familiarity, **Supabase** is recommended as a secondary option:
-- PostgreSQL-based (SQL support maintained)
-- Fully managed (no infrastructure to maintain)
-- Real-time sync built-in
-- Free tier: 500MB database
-- Flutter package: `supabase_flutter`
+3. ⏳ Implement MSSQL database service
+4. ⏳ Test and deploy
 
 ## Not Recommended
 

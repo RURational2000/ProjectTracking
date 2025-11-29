@@ -1,111 +1,14 @@
-# Implementation Quick Start Guide (When Ready)
+# MSSQL Implementation Quick Start Guide
 
-> **Note:** This is a quick reference guide for future implementation. The actual migration should only begin after reviewing and approving the recommendations in `DATABASE_MIGRATION_SUMMARY.md` and `docs/database-alternatives-consideration.md`.
+> **Note:** This guide provides step-by-step instructions for implementing MSSQL Server as the database backend for Project Tracking. MSSQL has been selected as the sole database solution, providing a clear path from self-hosted SQL Server Express to Azure SQL Database.
 
 ## Pre-Implementation Checklist
 
-- [ ] Review and approve database choice (MSSQL recommended)
+- [ ] Review and approve MSSQL as database choice ✅
 - [ ] Confirm infrastructure availability (server for SQL Server Express or cloud account)
 - [ ] Set up development/test environment
-- [ ] Back up all existing SQLite data
-- [ ] Plan downtime/migration schedule
 
-## Phase 1: Database Abstraction (1-2 weeks)
-
-### 1. Create Abstract Interface
-
-```dart
-// lib/services/database_service_interface.dart
-abstract class IDatabaseService {
-  Future<void> initialize();
-  
-  // Project operations
-  Future<int> insertProject(Project project);
-  Future<List<Project>> getAllProjects();
-  Future<Project?> getProject(int id);
-  Future<void> updateProject(Project project);
-  
-  // Instance operations
-  Future<int> insertInstance(Instance instance);
-  Future<Instance?> getActiveInstance();
-  Future<List<Instance>> getInstancesForProject(int projectId);
-  Future<void> updateInstance(Instance instance);
-  
-  // Note operations
-  Future<int> insertNote(Note note);
-  Future<List<Note>> getNotesForInstance(int instanceId);
-}
-```
-
-### 2. Refactor SQLite Service
-
-```dart
-// lib/services/sqlite_database_service.dart
-class SqliteDatabaseService implements IDatabaseService {
-  // Move existing DatabaseService code here
-  // Implement all interface methods
-}
-```
-
-### 3. Update Provider
-
-```dart
-// lib/providers/tracking_provider.dart
-class TrackingProvider with ChangeNotifier {
-  final IDatabaseService dbService; // Changed from DatabaseService
-  // Rest remains the same
-}
-```
-
-### 4. Add Configuration
-
-```dart
-// lib/config/database_config.dart
-enum DatabaseType { sqlite, mssql }
-
-class DatabaseConfig {
-  static DatabaseType get currentType {
-    // Read from environment or config file
-    return DatabaseType.sqlite; // Default for now
-  }
-  
-  static IDatabaseService createDatabaseService() {
-    switch (currentType) {
-      case DatabaseType.mssql:
-        return MssqlDatabaseService();
-      case DatabaseType.sqlite:
-      default:
-        return SqliteDatabaseService();
-    }
-  }
-}
-```
-
-### 5. Update main.dart
-
-```dart
-// lib/main.dart
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize sqflite for desktop if needed
-  if (Platform.isWindows || Platform.isLinux) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  }
-  
-  // Use factory to create appropriate service
-  final dbService = DatabaseConfig.createDatabaseService();
-  await dbService.initialize();
-  
-  final fileService = FileLoggingService();
-  await fileService.initialize();
-  
-  runApp(MyApp(dbService: dbService, fileService: fileService));
-}
-```
-
-## Phase 2: MSSQL Implementation (2-3 weeks)
+## Phase 1: MSSQL Implementation (2-3 weeks)
 
 ### 1. Set Up SQL Server
 
@@ -182,17 +85,17 @@ dependencies:
 ### 3. Implement MSSQL Service
 
 ```dart
-// lib/services/mssql_database_service.dart
+// lib/services/database_service.dart
 import 'package:mssql_connection/mssql_connection.dart';
-import 'package:project_tracking/services/database_service_interface.dart';
 import 'package:project_tracking/models/project.dart';
 import 'package:project_tracking/models/instance.dart';
 import 'package:project_tracking/models/note.dart';
 
-class MssqlDatabaseService implements IDatabaseService {
+/// Core database service using MSSQL Server for centralized persistence.
+/// Manages Projects, Instances (work sessions), and Notes with time accumulation.
+class DatabaseService {
   MssqlConnection? _connection;
   
-  @override
   Future<void> initialize() async {
     _connection = MssqlConnection.getInstance();
     
@@ -216,7 +119,6 @@ class MssqlDatabaseService implements IDatabaseService {
     return const String.fromEnvironment('DB_PASSWORD');
   }
   
-  @override
   Future<int> insertProject(Project project) async {
     String query = '''
       INSERT INTO projects (name, totalMinutes, createdAt, lastActiveAt)
@@ -234,7 +136,6 @@ class MssqlDatabaseService implements IDatabaseService {
     return result[0]['id'] as int;
   }
   
-  @override
   Future<List<Project>> getAllProjects() async {
     String query = '''
       SELECT id, name, totalMinutes, createdAt, lastActiveAt
@@ -246,7 +147,6 @@ class MssqlDatabaseService implements IDatabaseService {
     return result.map((row) => Project.fromMap(row)).toList();
   }
   
-  @override
   Future<Project?> getProject(int id) async {
     String query = '''
       SELECT id, name, totalMinutes, createdAt, lastActiveAt
@@ -259,7 +159,6 @@ class MssqlDatabaseService implements IDatabaseService {
     return Project.fromMap(result.first);
   }
   
-  @override
   Future<void> updateProject(Project project) async {
     String query = '''
       UPDATE projects
@@ -277,8 +176,7 @@ class MssqlDatabaseService implements IDatabaseService {
     });
   }
   
-  // Implement remaining interface methods similarly...
-  // See detailed documentation for complete implementation
+  // Implement remaining methods for Instance and Note operations similarly
 }
 ```
 
@@ -292,103 +190,7 @@ sudo apt-get install openvpn
 # Configure firewall to allow SQL Server port 1433 through VPN only
 ```
 
-## Phase 3: Migration Tools (1 week)
-
-### Export from SQLite
-
-```dart
-// tools/export_sqlite_data.dart
-import 'dart:io';
-import 'dart:convert';
-import 'package:project_tracking/services/sqlite_database_service.dart';
-
-Future<void> main() async {
-  final sqliteService = SqliteDatabaseService();
-  await sqliteService.initialize();
-  
-  // Export all data
-  final projects = await sqliteService.getAllProjects();
-  
-  final exportData = {
-    'export_date': DateTime.now().toIso8601String(),
-    'projects': [],
-  };
-  
-  for (var project in projects) {
-    final instances = await sqliteService.getInstancesForProject(project.id!);
-    final projectData = {
-      'project': project.toMap(),
-      'instances': [],
-    };
-    
-    for (var instance in instances) {
-      final notes = await sqliteService.getNotesForInstance(instance.id!);
-      projectData['instances'].add({
-        'instance': instance.toMap(),
-        'notes': notes.map((n) => n.toMap()).toList(),
-      });
-    }
-    
-    exportData['projects'].add(projectData);
-  }
-  
-  // Save to JSON file
-  final file = File('project_tracking_export_${DateTime.now().millisecondsSinceEpoch}.json');
-  await file.writeAsString(JsonEncoder.withIndent('  ').convert(exportData));
-  print('Exported to: ${file.path}');
-}
-```
-
-### Import to MSSQL
-
-```dart
-// tools/import_to_mssql.dart
-import 'dart:io';
-import 'dart:convert';
-import 'package:project_tracking/services/mssql_database_service.dart';
-import 'package:project_tracking/models/project.dart';
-import 'package:project_tracking/models/instance.dart';
-import 'package:project_tracking/models/note.dart';
-
-Future<void> main(List<String> args) async {
-  if (args.isEmpty) {
-    print('Usage: dart import_to_mssql.dart <export_file.json>');
-    exit(1);
-  }
-  
-  final file = File(args[0]);
-  if (!file.existsSync()) {
-    print('File not found: ${args[0]}');
-    exit(1);
-  }
-  
-  final mssqlService = MssqlDatabaseService();
-  await mssqlService.initialize();
-  
-  final jsonData = jsonDecode(await file.readAsString());
-  
-  for (var projectData in jsonData['projects']) {
-    final project = Project.fromMap(projectData['project']);
-    final newProjectId = await mssqlService.insertProject(project);
-    
-    for (var instanceData in projectData['instances']) {
-      final instance = Instance.fromMap(instanceData['instance']);
-      final newInstance = instance.copyWith(projectId: newProjectId);
-      final newInstanceId = await mssqlService.insertInstance(newInstance);
-      
-      for (var noteData in instanceData['notes']) {
-        final note = Note.fromMap(noteData);
-        final newNote = note.copyWith(instanceId: newInstanceId);
-        await mssqlService.insertNote(newNote);
-      }
-    }
-  }
-  
-  print('Import completed successfully!');
-}
-```
-
-## Phase 4: Testing (1 week)
+## Phase 2: Testing (1 week)
 
 ### Test Checklist
 
@@ -399,21 +201,20 @@ Future<void> main(List<String> args) async {
 - [ ] Test network interruption handling
 - [ ] Test authentication and authorization
 - [ ] Performance test with realistic data volumes
-- [ ] Test data migration accuracy
 
 ### Test Script
 
 ```dart
-// test/integration/mssql_integration_test.dart
+// test/integration/database_integration_test.dart
 import 'package:test/test.dart';
-import 'package:project_tracking/services/mssql_database_service.dart';
+import 'package:project_tracking/services/database_service.dart';
 import 'package:project_tracking/models/project.dart';
 
 void main() {
-  late MssqlDatabaseService db;
+  late DatabaseService db;
   
   setUp(() async {
-    db = MssqlDatabaseService();
+    db = DatabaseService();
     await db.initialize();
   });
   
@@ -435,13 +236,12 @@ void main() {
 }
 ```
 
-## Phase 5: Deployment
+## Phase 3: Deployment
 
 ### 1. Update Configuration
 
 ```dart
 // Set environment variable or config
-// DB_TYPE=mssql
 // DB_PASSWORD=YourSecurePassword
 ```
 
@@ -452,16 +252,12 @@ void main() {
 flutter build apk --release
 flutter build windows --release
 # etc.
-
-# Distribute to users with migration instructions
 ```
 
-### 3. User Migration Steps
+### 3. App Startup
 
-1. Install new version
-2. Export existing data (if keeping local backup)
-3. App connects to MSSQL automatically on first run
-4. Verify data sync is working
+1. App connects to MSSQL on first run
+2. Verify data operations are working
 
 ## Security Checklist
 
