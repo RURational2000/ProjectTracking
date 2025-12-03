@@ -1,76 +1,75 @@
-# MSSQL Implementation Quick Start Guide
+# Supabase Implementation Quick Start Guide
 
-> **Note:** This guide provides step-by-step instructions for implementing MSSQL Server as the database backend for Project Tracking. MSSQL has been selected as the sole database solution, providing a clear path from self-hosted SQL Server Express to Azure SQL Database.
+> **Note:** This guide provides step-by-step instructions for implementing Supabase as the database backend for Project Tracking. Supabase has been selected as the database solution, providing a managed PostgreSQL database with built-in authentication, real-time subscriptions, and auto-generated APIs.
 
 ## Pre-Implementation Checklist
 
-- [ ] Review and approve MSSQL as database choice ✅
-- [ ] Confirm infrastructure availability (server for SQL Server Express or cloud account)
+- [ ] Review and approve Supabase as database choice ✅
+- [ ] Create Supabase account (free tier available)
 - [ ] Set up development/test environment
 
-## Phase 1: MSSQL Implementation (2-3 weeks)
+## Phase 1: Supabase Implementation (2-3 weeks)
 
-### 1. Set Up SQL Server
+### 1. Set Up Supabase Project
 
-**On Windows Server/PC:**
-```powershell
-# Download SQL Server Express
-# https://www.microsoft.com/en-us/sql-server/sql-server-downloads
-
-# Install SQL Server Express
-# Enable SQL Server Authentication
-# Create database: ProjectTracking
-# Create user: trackinguser with password
-```
+**Create Project:**
+1. Go to https://supabase.com and create an account
+2. Create a new project
+3. Note your Project URL and anon/public API key
+4. Wait for project to finish provisioning (~2 minutes)
 
 **SQL Setup Script:**
 ```sql
--- Create database
-CREATE DATABASE ProjectTracking;
-GO
-
-USE ProjectTracking;
-GO
-
 -- Projects table
 CREATE TABLE projects (
-  id INT PRIMARY KEY IDENTITY(1,1),
-  name NVARCHAR(255) NOT NULL,
-  totalMinutes INT NOT NULL DEFAULT 0,
-  createdAt DATETIME2 NOT NULL,
-  lastActiveAt DATETIME2
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  totalMinutes INTEGER NOT NULL DEFAULT 0,
+  createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  lastActiveAt TIMESTAMPTZ
 );
 
 -- Instances table
 CREATE TABLE instances (
-  id INT PRIMARY KEY IDENTITY(1,1),
-  projectId INT NOT NULL,
-  startTime DATETIME2 NOT NULL,
-  endTime DATETIME2,
-  durationMinutes INT NOT NULL DEFAULT 0,
-  CONSTRAINT FK_instances_projects FOREIGN KEY (projectId) 
+  id BIGSERIAL PRIMARY KEY,
+  projectId BIGINT NOT NULL,
+  startTime TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  endTime TIMESTAMPTZ,
+  durationMinutes INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT fk_instances_projects FOREIGN KEY (projectId) 
     REFERENCES projects (id) ON DELETE CASCADE
 );
 
 -- Notes table
 CREATE TABLE notes (
-  id INT PRIMARY KEY IDENTITY(1,1),
-  instanceId INT NOT NULL,
-  content NVARCHAR(MAX) NOT NULL,
-  createdAt DATETIME2 NOT NULL,
-  CONSTRAINT FK_notes_instances FOREIGN KEY (instanceId) 
+  id BIGSERIAL PRIMARY KEY,
+  instanceId BIGINT NOT NULL,
+  content TEXT NOT NULL,
+  createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT fk_notes_instances FOREIGN KEY (instanceId) 
     REFERENCES instances (id) ON DELETE CASCADE
 );
 
 -- Indexes
-CREATE NONCLUSTERED INDEX idx_instances_projectId ON instances(projectId);
-CREATE NONCLUSTERED INDEX idx_notes_instanceId ON notes(instanceId);
-CREATE NONCLUSTERED INDEX idx_projects_lastActiveAt ON projects(lastActiveAt DESC);
+CREATE INDEX idx_instances_projectId ON instances(projectId);
+CREATE INDEX idx_notes_instanceId ON notes(instanceId);
+CREATE INDEX idx_projects_lastActiveAt ON projects(lastActiveAt DESC);
 
--- Create user
-CREATE LOGIN trackinguser WITH PASSWORD = 'YourStrongPassword123!';
-CREATE USER trackinguser FOR LOGIN trackinguser;
-GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::dbo TO trackinguser;
+-- Enable Row Level Security (RLS)
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE instances ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+
+-- Create policies (adjust based on your auth requirements)
+-- For now, allow all authenticated users to access all data
+CREATE POLICY "Allow all for authenticated users" ON projects
+  FOR ALL USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow all for authenticated users" ON instances
+  FOR ALL USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow all for authenticated users" ON notes
+  FOR ALL USING (auth.role() = 'authenticated');
 ```
 
 ### 2. Add Dart Package
@@ -79,127 +78,256 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::dbo TO trackinguser;
 # pubspec.yaml
 dependencies:
   # ... existing packages
-  mssql_connection: ^1.0.0  # Check latest version on pub.dev
+  supabase_flutter: ^2.0.0  # Check latest version on pub.dev
 ```
 
-### 3. Implement MSSQL Service
+### 3. Implement Supabase Service
 
 ```dart
 // lib/services/database_service.dart
-import 'package:mssql_connection/mssql_connection.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:project_tracking/models/project.dart';
 import 'package:project_tracking/models/instance.dart';
 import 'package:project_tracking/models/note.dart';
 
-/// Core database service using MSSQL Server for centralized persistence.
+/// Core database service using Supabase for centralized persistence.
 /// Manages Projects, Instances (work sessions), and Notes with time accumulation.
 class DatabaseService {
-  MssqlConnection? _connection;
+  final SupabaseClient _client = Supabase.instance.client;
   
   Future<void> initialize() async {
-    _connection = MssqlConnection.getInstance();
-    
-    bool isConnected = await _connection!.connect(
-      ip: "your-server-ip-or-vpn-hostname",
-      port: "1433",
-      databaseName: "ProjectTracking",
-      username: "trackinguser",
-      password: _getSecurePassword(),
-      connectionTimeout: 30,
-    );
-    
-    if (!isConnected) {
-      throw Exception('Failed to connect to MSSQL database');
-    }
-  }
-  
-  String _getSecurePassword() {
-    // Read from secure storage, environment variable, or encrypted config
-    // NEVER hardcode passwords!
-    return const String.fromEnvironment('DB_PASSWORD');
+    // Supabase is initialized in main.dart
+    // This method can be used for any additional setup if needed
   }
   
   Future<int> insertProject(Project project) async {
-    String query = '''
-      INSERT INTO projects (name, totalMinutes, createdAt, lastActiveAt)
-      OUTPUT INSERTED.id
-      VALUES (@name, @totalMinutes, @createdAt, @lastActiveAt)
-    ''';
+    final response = await _client
+        .from('projects')
+        .insert({
+          'name': project.name,
+          'totalMinutes': project.totalMinutes,
+          'createdAt': project.createdAt.toIso8601String(),
+          'lastActiveAt': project.lastActiveAt?.toIso8601String(),
+        })
+        .select('id')
+        .single();
     
-    var result = await _connection!.writeData(query, {
-      'name': project.name,
-      'totalMinutes': project.totalMinutes,
-      'createdAt': project.createdAt.toIso8601String(),
-      'lastActiveAt': project.lastActiveAt?.toIso8601String(),
-    });
-    
-    return result[0]['id'] as int;
+    return response['id'] as int;
   }
   
   Future<List<Project>> getAllProjects() async {
-    String query = '''
-      SELECT id, name, totalMinutes, createdAt, lastActiveAt
-      FROM projects
-      ORDER BY lastActiveAt DESC, name ASC
-    ''';
+    final response = await _client
+        .from('projects')
+        .select()
+        .order('lastActiveAt', ascending: false)
+        .order('name', ascending: true);
     
-    var result = await _connection!.readData(query);
-    return result.map((row) => Project.fromMap(row)).toList();
+    return (response as List)
+        .map((data) => Project.fromMap(data))
+        .toList();
   }
   
   Future<Project?> getProject(int id) async {
-    String query = '''
-      SELECT id, name, totalMinutes, createdAt, lastActiveAt
-      FROM projects
-      WHERE id = @id
-    ''';
+    final response = await _client
+        .from('projects')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
     
-    var result = await _connection!.readData(query, {'id': id});
-    if (result.isEmpty) return null;
-    return Project.fromMap(result.first);
+    if (response == null) return null;
+    return Project.fromMap(response);
   }
   
   Future<void> updateProject(Project project) async {
-    String query = '''
-      UPDATE projects
-      SET name = @name,
-          totalMinutes = @totalMinutes,
-          lastActiveAt = @lastActiveAt
-      WHERE id = @id
-    ''';
-    
-    await _connection!.writeData(query, {
-      'id': project.id,
-      'name': project.name,
-      'totalMinutes': project.totalMinutes,
-      'lastActiveAt': project.lastActiveAt?.toIso8601String(),
-    });
+    await _client
+        .from('projects')
+        .update({
+          'name': project.name,
+          'totalMinutes': project.totalMinutes,
+          'lastActiveAt': project.lastActiveAt?.toIso8601String(),
+        })
+        .eq('id', project.id!);
   }
   
-  // Implement remaining methods for Instance and Note operations similarly
+  Future<Instance?> getActiveInstance() async {
+    final response = await _client
+        .from('instances')
+        .select()
+        .is_('endTime', null)
+        .order('startTime', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    
+    if (response == null) return null;
+    return Instance.fromMap(response);
+  }
+  
+  Future<int> insertInstance(Instance instance) async {
+    final response = await _client
+        .from('instances')
+        .insert({
+          'projectId': instance.projectId,
+          'startTime': instance.startTime.toIso8601String(),
+          'endTime': instance.endTime?.toIso8601String(),
+          'durationMinutes': instance.durationMinutes,
+        })
+        .select('id')
+        .single();
+    
+    return response['id'] as int;
+  }
+  
+  Future<void> updateInstance(Instance instance) async {
+    await _client
+        .from('instances')
+        .update({
+          'endTime': instance.endTime?.toIso8601String(),
+          'durationMinutes': instance.durationMinutes,
+        })
+        .eq('id', instance.id!);
+  }
+  
+  Future<List<Instance>> getInstancesForProject(int projectId) async {
+    final response = await _client
+        .from('instances')
+        .select()
+        .eq('projectId', projectId)
+        .order('startTime', ascending: false);
+    
+    return (response as List)
+        .map((data) => Instance.fromMap(data))
+        .toList();
+  }
+  
+  Future<int> insertNote(Note note) async {
+    if (note.content.trim().isEmpty) {
+      throw ArgumentError('Note content cannot be empty');
+    }
+    
+    final response = await _client
+        .from('notes')
+        .insert({
+          'instanceId': note.instanceId,
+          'content': note.content,
+          'createdAt': note.createdAt.toIso8601String(),
+        })
+        .select('id')
+        .single();
+    
+    return response['id'] as int;
+  }
+  
+  Future<List<Note>> getNotesForInstance(int instanceId) async {
+    final response = await _client
+        .from('notes')
+        .select()
+        .eq('instanceId', instanceId)
+        .order('createdAt', ascending: true);
+    
+    return (response as List)
+        .map((data) => Note.fromMap(data))
+        .toList();
+  }
 }
 ```
 
-### 4. Configure OpenVPN (if using VPN access)
+### 4. Initialize Supabase in main.dart
 
-```bash
-# On server
-sudo apt-get install openvpn
-# Configure OpenVPN server
-# Generate client certificates
-# Configure firewall to allow SQL Server port 1433 through VPN only
+```dart
+// lib/main.dart
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:project_tracking/services/database_service.dart';
+import 'package:project_tracking/services/file_logging_service.dart';
+import 'package:project_tracking/providers/tracking_provider.dart';
+import 'package:project_tracking/screens/home_screen.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: 'YOUR_SUPABASE_URL',
+    anonKey: 'YOUR_SUPABASE_ANON_KEY',
+  );
+  
+  // Initialize services
+  final dbService = DatabaseService();
+  await dbService.initialize();
+  
+  final fileService = FileLoggingService();
+  await fileService.initialize();
+  
+  runApp(MyApp(dbService: dbService, fileService: fileService));
+}
+
+class MyApp extends StatelessWidget {
+  final DatabaseService dbService;
+  final FileLoggingService fileService;
+  
+  const MyApp({
+    super.key,
+    required this.dbService,
+    required this.fileService,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => TrackingProvider(
+        dbService: dbService,
+        fileService: fileService,
+      ),
+      child: MaterialApp(
+        title: 'Project Tracking',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          useMaterial3: true,
+        ),
+        home: const HomeScreen(),
+      ),
+    );
+  }
+}
+```
+
+### 5. Environment Configuration
+
+**Option 1: Use environment variables (recommended for production)**
+```dart
+// Store in .env file (add to .gitignore)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+
+// Load in code
+await Supabase.initialize(
+  url: const String.fromEnvironment('SUPABASE_URL'),
+  anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+);
+```
+
+**Option 2: Configuration file (for development)**
+```dart
+// lib/config/supabase_config.dart
+class SupabaseConfig {
+  static const String url = 'YOUR_SUPABASE_URL';
+  static const String anonKey = 'YOUR_SUPABASE_ANON_KEY';
+}
 ```
 
 ## Phase 2: Testing (1 week)
 
 ### Test Checklist
 
-- [ ] Test MSSQL connection from all platforms (Android, iOS, Windows, Linux)
+- [ ] Test Supabase connection from all platforms (Android, iOS, Windows, Linux)
 - [ ] Test all CRUD operations
 - [ ] Test foreign key constraints and CASCADE deletes
 - [ ] Test concurrent access from multiple devices
 - [ ] Test network interruption handling
-- [ ] Test authentication and authorization
+- [ ] Test authentication and authorization with Supabase Auth
+- [ ] Test real-time subscriptions (if implemented)
+- [ ] Test Row-Level Security policies
 - [ ] Performance test with realistic data volumes
 
 ### Test Script
@@ -241,8 +369,9 @@ void main() {
 ### 1. Update Configuration
 
 ```dart
-// Set environment variable or config
-// DB_PASSWORD=YourSecurePassword
+// Set environment variables or use secure configuration
+// SUPABASE_URL=https://your-project.supabase.co
+// SUPABASE_ANON_KEY=your-anon-key
 ```
 
 ### 2. Deploy New Version
@@ -256,49 +385,74 @@ flutter build windows --release
 
 ### 3. App Startup
 
-1. App connects to MSSQL on first run
-2. Verify data operations are working
+1. App connects to Supabase on first run
+2. Users can authenticate using Supabase Auth
+3. Verify data operations are working
 
 ## Security Checklist
 
-- [ ] Strong passwords for SQL Server authentication
-- [ ] OpenVPN or equivalent secure tunnel configured
-- [ ] SQL Server not exposed directly to internet
-- [ ] Connection strings stored securely (not in source code)
-- [ ] Regular backups configured
-- [ ] Audit logging enabled
-- [ ] Firewall rules configured properly
-- [ ] SSL/TLS enabled for SQL Server connections
+- [ ] Row-Level Security (RLS) policies configured in Supabase
+- [ ] Authentication enabled and tested
+- [ ] API keys secured (anon key in client, service role key never exposed)
+- [ ] Environment variables used for sensitive configuration
+- [ ] Database backup policies configured in Supabase dashboard
+- [ ] SSL/TLS encryption enabled (default with Supabase)
+- [ ] Access logs reviewed in Supabase dashboard
+
+## Real-Time Features (Optional)
+
+Supabase provides real-time subscriptions out of the box:
+
+```dart
+// Subscribe to project changes
+final subscription = _client
+    .from('projects')
+    .stream(primaryKey: ['id'])
+    .listen((List<Map<String, dynamic>> data) {
+      // Handle real-time updates
+      final projects = data.map((d) => Project.fromMap(d)).toList();
+      // Update UI
+    });
+
+// Don't forget to cancel subscription when done
+subscription.cancel();
+```
 
 ## Troubleshooting
 
 ### Connection Issues
 ```dart
-// Add detailed logging
-print('Attempting connection to: $ip:$port');
-print('Database: $databaseName');
-print('Username: $username');
-// Never log passwords!
+// Check Supabase initialization
+try {
+  await Supabase.initialize(
+    url: 'YOUR_URL',
+    anonKey: 'YOUR_KEY',
+  );
+  print('Supabase initialized successfully');
+} catch (e) {
+  print('Failed to initialize Supabase: $e');
+}
 ```
 
-### Performance Issues
-- Check network latency
-- Add connection pooling
-- Implement caching for frequently accessed data
-- Use indexes on queried columns
+### Authentication Issues
+- Verify authentication is enabled in Supabase dashboard
+- Check that email confirmation is configured correctly
+- Ensure RLS policies allow authenticated users
 
-### Data Sync Issues
-- Verify foreign key constraints
-- Check transaction isolation levels
-- Implement retry logic for network failures
+### Performance Issues
+- Use Supabase query filters to reduce data transfer
+- Implement pagination for large datasets
+- Use indexes on frequently queried columns (already created in setup)
+- Consider using Supabase Edge Functions for complex operations
 
 ## Resources
 
-- [MSSQL Connection Package](https://pub.dev/packages/mssql_connection)
-- [SQL Server Express Download](https://www.microsoft.com/en-us/sql-server/sql-server-downloads)
-- [Azure SQL Documentation](https://docs.microsoft.com/en-us/azure/azure-sql/)
+- [Supabase Flutter Documentation](https://supabase.com/docs/reference/dart/introduction)
+- [Supabase Dashboard](https://supabase.com/dashboard)
+- [Supabase Auth Documentation](https://supabase.com/docs/guides/auth)
+- [Row-Level Security Guide](https://supabase.com/docs/guides/auth/row-level-security)
 - [Flutter Provider Documentation](https://pub.dev/packages/provider)
 
 ---
 
-**Remember:** Always test thoroughly in a development environment before deploying to production!
+**Remember:** Supabase provides automatic backups and managed infrastructure. Focus on building features rather than managing servers!
