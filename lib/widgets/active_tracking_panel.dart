@@ -85,15 +85,14 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
                 // End time editor
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        'End Time:',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w500,
-                        ),
+                    Text(
+                      'End Time:',
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+                    const Spacer(),
                     TextButton.icon(
                       onPressed: () => _selectEndTime(context),
                       icon: const Icon(Icons.edit_calendar, size: 18),
@@ -166,15 +165,14 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
   Future<void> _selectEndTime(BuildContext context) async {
     final provider = Provider.of<TrackingProvider>(context, listen: false);
     final startTime = provider.activeInstance?.startTime ?? DateTime.now();
-    final now = DateTime.now();
-    final initialTime = _customEndTime ?? now;
+    final initialTime = _customEndTime ?? DateTime.now();
 
     // First select date
     final selectedDate = await showDatePicker(
       context: context,
       initialDate: initialTime,
       firstDate: startTime,
-      lastDate: now,
+      lastDate: DateTime.now(),
       helpText: 'Select End Date',
     );
 
@@ -198,7 +196,8 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
       selectedTime.minute,
     );
 
-    // Validate: end time must not be later than now and not before start time
+    // Validate: end time must not be later than now (recalculate for accuracy)
+    final now = DateTime.now();
     if (combinedDateTime.isAfter(now)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
