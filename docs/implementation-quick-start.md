@@ -61,7 +61,9 @@ ALTER TABLE instances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (adjust based on your auth requirements)
--- For now, allow all authenticated users to access all data
+-- IMPORTANT: These policies allow all authenticated users to access all data.
+-- For multi-user scenarios, implement user-specific policies based on your needs.
+-- Example for user-specific access: USING (auth.uid() = user_id)
 CREATE POLICY "Allow all for authenticated users" ON projects
   FOR ALL USING (auth.role() = 'authenticated');
 
@@ -247,6 +249,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize Supabase
+  // IMPORTANT: Replace with your actual Supabase project credentials
+  // DO NOT commit real credentials to version control
   await Supabase.initialize(
     url: 'YOUR_SUPABASE_URL',
     anonKey: 'YOUR_SUPABASE_ANON_KEY',
@@ -310,6 +314,7 @@ await Supabase.initialize(
 **Option 2: Configuration file (for development)**
 ```dart
 // lib/config/supabase_config.dart
+// WARNING: Add this file to .gitignore to avoid committing credentials
 class SupabaseConfig {
   static const String url = 'YOUR_SUPABASE_URL';
   static const String anonKey = 'YOUR_SUPABASE_ANON_KEY';
