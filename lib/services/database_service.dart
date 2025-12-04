@@ -187,6 +187,7 @@ class DatabaseService {
 
   /// Helper method to extract total minutes from query result
   int _extractTotalMinutes(List<Map<String, Object?>> result) {
+    if (result.isEmpty) return 0;
     final total = result.first['total'];
     return total != null ? (total as num).toInt() : 0;
   }

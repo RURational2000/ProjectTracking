@@ -29,13 +29,9 @@ class ProjectList extends StatelessWidget {
               return StreamBuilder<void>(
                 stream: Stream<void>.periodic(const Duration(seconds: 30)),
                 builder: (context, snapshot) {
-                  return FutureBuilder<int>(
-                    future: provider.getDisplayTimeForProject(project),
-                    builder: (context, snapshot) {
-                      final minutes = snapshot.data ?? 0;
-                      return _buildProjectCard(context, provider, project, isActive, minutes);
-                    },
-                  );
+                  // Directly get current duration without database query
+                  final minutes = provider.getCurrentDuration();
+                  return _buildProjectCard(context, provider, project, isActive, minutes);
                 },
               );
             }

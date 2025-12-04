@@ -169,23 +169,43 @@ class TrackingProvider with ChangeNotifier {
         return await dbService.getProjectMinutesForDate(project.id!, today);
 
       case TimeDisplayMode.week:
-        final now = DateTime.now();
-        final daysToSubtract = now.weekday == 1 ? 0 : now.weekday - 1;
-        final startOfWeek = now.subtract(Duration(days: daysToSubtract));
-        final startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
-        final endDate = startDate.add(const Duration(days: 7));
-        return await dbService.getProjectMinutesInRange(project.id!, startDate, endDate);
+        final bounds = _getWeekBounds();
+        return await dbService.getProjectMinutesInRange(project.id!, bounds.start, bounds.end);
 
       case TimeDisplayMode.month:
-        final now = DateTime.now();
-        final startOfMonth = DateTime(now.year, now.month, 1);
-        final endOfMonth = DateTime(now.year, now.month + 1, 1);
-        return await dbService.getProjectMinutesInRange(project.id!, startOfMonth, endOfMonth);
+        final bounds = _getMonthBounds();
+        return await dbService.getProjectMinutesInRange(project.id!, bounds.start, bounds.end);
 
       case TimeDisplayMode.project:
         return project.totalMinutes;
     }
   }
+
+  /// Get start and end dates for the current week (Monday-Sunday)
+  _DateBounds _getWeekBounds() {
+    final now = DateTime.now();
+    final daysToSubtract = now.weekday == 1 ? 0 : now.weekday - 1;
+    final startOfWeek = now.subtract(Duration(days: daysToSubtract));
+    final startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+    final endDate = startDate.add(const Duration(days: 7));
+    return _DateBounds(startDate, endDate);
+  }
+
+  /// Get start and end dates for the current month
+  _DateBounds _getMonthBounds() {
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    final endOfMonth = DateTime(now.year, now.month + 1, 1);
+    return _DateBounds(startOfMonth, endOfMonth);
+  }
+}
+
+/// Helper class to hold date range bounds
+class _DateBounds {
+  final DateTime start;
+  final DateTime end;
+
+  _DateBounds(this.start, this.end);
 }
 
 extension NoteCopyWith on Note {
