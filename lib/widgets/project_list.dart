@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:project_tracking/models/time_display_mode.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 import 'package:project_tracking/models/project.dart';
 
@@ -23,31 +24,37 @@ class ProjectList extends StatelessWidget {
             final project = provider.projects[index];
             final isActive = provider.activeProject?.id == project.id;
 
-            return Card(
-              color: isActive ? Colors.blue.shade50 : null,
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: isActive ? Colors.blue : Colors.grey,
-                  child: Icon(
-                    isActive ? Icons.play_arrow : Icons.folder,
-                    color: Colors.white,
-                  ),
-                ),
-                title: Text(
-                  project.name,
-                  style: TextStyle(
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-                subtitle: Text(_formatTime(project.totalMinutes)),
-                trailing: isActive
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.play_circle_outline),
-                        onPressed: () => _startProject(context, provider, project),
+            return FutureBuilder<int>(
+              future: provider.getDisplayTimeForProject(project),
+              builder: (context, snapshot) {
+                final minutes = snapshot.data ?? 0;
+                return Card(
+                  color: isActive ? Colors.blue.shade50 : null,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: isActive ? Colors.blue : Colors.grey,
+                      child: Icon(
+                        isActive ? Icons.play_arrow : Icons.folder,
+                        color: Colors.white,
                       ),
-                onTap: isActive ? null : () => _startProject(context, provider, project),
-              ),
+                    ),
+                    title: Text(
+                      project.name,
+                      style: TextStyle(
+                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    subtitle: Text(_formatTime(minutes, provider.timeDisplayMode)),
+                    trailing: isActive
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.play_circle_outline),
+                            onPressed: () => _startProject(context, provider, project),
+                          ),
+                    onTap: isActive ? null : () => _startProject(context, provider, project),
+                  ),
+                );
+              },
             );
           },
         );
@@ -55,13 +62,11 @@ class ProjectList extends StatelessWidget {
     );
   }
 
-  String _formatTime(int minutes) {
+  String _formatTime(int minutes, TimeDisplayMode mode) {
     final hours = minutes ~/ 60;
     final mins = minutes % 60;
-    if (hours > 0) {
-      return 'Total: ${hours}h ${mins}m';
-    }
-    return 'Total: ${mins}m';
+    final timeStr = hours > 0 ? '${hours}h ${mins}m' : '${mins}m';
+    return '${mode.label}: $timeStr';
   }
 
   Future<void> _startProject(

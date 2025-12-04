@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:project_tracking/models/project.dart';
 import 'package:project_tracking/models/instance.dart';
 import 'package:project_tracking/models/note.dart';
+import 'package:project_tracking/models/time_display_mode.dart';
 import 'package:project_tracking/services/database_service.dart';
 import 'package:project_tracking/services/file_logging_service.dart';
 
@@ -15,6 +16,7 @@ class TrackingProvider with ChangeNotifier {
   Instance? _activeInstance;
   Project? _activeProject;
   List<Note> _currentNotes = [];
+  TimeDisplayMode _timeDisplayMode = TimeDisplayMode.project;
 
   TrackingProvider({
     required this.dbService,
@@ -28,6 +30,7 @@ class TrackingProvider with ChangeNotifier {
   Project? get activeProject => _activeProject;
   List<Note> get currentNotes => _currentNotes;
   bool get hasActiveInstance => _activeInstance != null;
+  TimeDisplayMode get timeDisplayMode => _timeDisplayMode;
 
   Future<void> _initialize() async {
     await loadProjects();
@@ -140,6 +143,44 @@ class TrackingProvider with ChangeNotifier {
   int getCurrentDuration() {
     if (_activeInstance == null) return 0;
     return DateTime.now().difference(_activeInstance!.startTime).inMinutes;
+  }
+
+  /// Set the time display mode
+  void setTimeDisplayMode(TimeDisplayMode mode) {
+    _timeDisplayMode = mode;
+    notifyListeners();
+  }
+
+  /// Get display time for a project based on current display mode
+  Future<int> getDisplayTimeForProject(Project project) async {
+    switch (_timeDisplayMode) {
+      case TimeDisplayMode.instance:
+        // Show current instance duration if this is the active project
+        if (_activeProject?.id == project.id && _activeInstance != null) {
+          return getCurrentDuration();
+        }
+        return 0;
+
+      case TimeDisplayMode.day:
+        final today = DateTime.now();
+        return await dbService.getProjectMinutesForDate(project.id!, today);
+
+      case TimeDisplayMode.week:
+        final now = DateTime.now();
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        final startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+        final endDate = startDate.add(const Duration(days: 7));
+        return await dbService.getProjectMinutesInRange(project.id!, startDate, endDate);
+
+      case TimeDisplayMode.month:
+        final now = DateTime.now();
+        final startOfMonth = DateTime(now.year, now.month, 1);
+        final endOfMonth = DateTime(now.year, now.month + 1, 1);
+        return await dbService.getProjectMinutesInRange(project.id!, startOfMonth, endOfMonth);
+
+      case TimeDisplayMode.project:
+        return project.totalMinutes;
+    }
   }
 }
 

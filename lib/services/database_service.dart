@@ -146,4 +146,44 @@ class DatabaseService {
     );
     return maps.map((map) => Note.fromMap(map)).toList();
   }
+
+  /// Get total minutes for a project on a specific date
+  Future<int> getProjectMinutesForDate(int projectId, DateTime date) async {
+    final db = await database;
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    final result = await db.rawQuery('''
+      SELECT SUM(durationMinutes) as total
+      FROM instances
+      WHERE projectId = ?
+        AND endTime IS NOT NULL
+        AND startTime >= ?
+        AND startTime < ?
+    ''', [projectId, startOfDay.toIso8601String(), endOfDay.toIso8601String()]);
+
+    final total = result.first['total'];
+    return total != null ? (total as num).toInt() : 0;
+  }
+
+  /// Get total minutes for a project in a date range
+  Future<int> getProjectMinutesInRange(
+    int projectId,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    final db = await database;
+
+    final result = await db.rawQuery('''
+      SELECT SUM(durationMinutes) as total
+      FROM instances
+      WHERE projectId = ?
+        AND endTime IS NOT NULL
+        AND startTime >= ?
+        AND startTime < ?
+    ''', [projectId, startDate.toIso8601String(), endDate.toIso8601String()]);
+
+    final total = result.first['total'];
+    return total != null ? (total as num).toInt() : 0;
+  }
 }
