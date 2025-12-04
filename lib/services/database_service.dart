@@ -162,8 +162,7 @@ class DatabaseService {
         AND startTime < ?
     ''', [projectId, startOfDay.toIso8601String(), endOfDay.toIso8601String()]);
 
-    final total = result.first['total'];
-    return total != null ? (total as num).toInt() : 0;
+    return _extractTotalMinutes(result);
   }
 
   /// Get total minutes for a project in a date range
@@ -183,6 +182,11 @@ class DatabaseService {
         AND startTime < ?
     ''', [projectId, startDate.toIso8601String(), endDate.toIso8601String()]);
 
+    return _extractTotalMinutes(result);
+  }
+
+  /// Helper method to extract total minutes from query result
+  int _extractTotalMinutes(List<Map<String, Object?>> result) {
     final total = result.first['total'];
     return total != null ? (total as num).toInt() : 0;
   }

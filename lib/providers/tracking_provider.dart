@@ -153,6 +153,9 @@ class TrackingProvider with ChangeNotifier {
 
   /// Get display time for a project based on current display mode
   Future<int> getDisplayTimeForProject(Project project) async {
+    // Ensure project has a valid ID
+    if (project.id == null) return 0;
+
     switch (_timeDisplayMode) {
       case TimeDisplayMode.instance:
         // Show current instance duration if this is the active project
@@ -167,7 +170,8 @@ class TrackingProvider with ChangeNotifier {
 
       case TimeDisplayMode.week:
         final now = DateTime.now();
-        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        final daysToSubtract = now.weekday == 1 ? 0 : now.weekday - 1;
+        final startOfWeek = now.subtract(Duration(days: daysToSubtract));
         final startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
         final endDate = startDate.add(const Duration(days: 7));
         return await dbService.getProjectMinutesInRange(project.id!, startDate, endDate);
