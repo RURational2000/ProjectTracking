@@ -24,36 +24,27 @@ class ProjectList extends StatelessWidget {
             final project = provider.projects[index];
             final isActive = provider.activeProject?.id == project.id;
 
+            // For Instance mode with active project, use StreamBuilder for live updates
+            if (provider.timeDisplayMode == TimeDisplayMode.instance && isActive) {
+              return StreamBuilder(
+                stream: Stream.periodic(const Duration(seconds: 30)),
+                builder: (context, snapshot) {
+                  return FutureBuilder<int>(
+                    future: provider.getDisplayTimeForProject(project),
+                    builder: (context, snapshot) {
+                      final minutes = snapshot.data ?? 0;
+                      return _buildProjectCard(context, provider, project, isActive, minutes);
+                    },
+                  );
+                },
+              );
+            }
+
             return FutureBuilder<int>(
               future: provider.getDisplayTimeForProject(project),
               builder: (context, snapshot) {
                 final minutes = snapshot.data ?? 0;
-                return Card(
-                  color: isActive ? Colors.blue.shade50 : null,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: isActive ? Colors.blue : Colors.grey,
-                      child: Icon(
-                        isActive ? Icons.play_arrow : Icons.folder,
-                        color: Colors.white,
-                      ),
-                    ),
-                    title: Text(
-                      project.name,
-                      style: TextStyle(
-                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: Text(_formatTime(minutes, provider.timeDisplayMode)),
-                    trailing: isActive
-                        ? null
-                        : IconButton(
-                            icon: const Icon(Icons.play_circle_outline),
-                            onPressed: () => _startProject(context, provider, project),
-                          ),
-                    onTap: isActive ? null : () => _startProject(context, provider, project),
-                  ),
-                );
+                return _buildProjectCard(context, provider, project, isActive, minutes);
               },
             );
           },
@@ -67,6 +58,41 @@ class ProjectList extends StatelessWidget {
     final mins = minutes % 60;
     final timeStr = hours > 0 ? '${hours}h ${mins}m' : '${mins}m';
     return '${mode.label}: $timeStr';
+  }
+
+  Widget _buildProjectCard(
+    BuildContext context,
+    TrackingProvider provider,
+    Project project,
+    bool isActive,
+    int minutes,
+  ) {
+    return Card(
+      color: isActive ? Colors.blue.shade50 : null,
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: isActive ? Colors.blue : Colors.grey,
+          child: Icon(
+            isActive ? Icons.play_arrow : Icons.folder,
+            color: Colors.white,
+          ),
+        ),
+        title: Text(
+          project.name,
+          style: TextStyle(
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        subtitle: Text(_formatTime(minutes, provider.timeDisplayMode)),
+        trailing: isActive
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.play_circle_outline),
+                onPressed: () => _startProject(context, provider, project),
+              ),
+        onTap: isActive ? null : () => _startProject(context, provider, project),
+      ),
+    );
   }
 
   Future<void> _startProject(
