@@ -164,15 +164,18 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
 
   Future<void> _selectEndTime(BuildContext context) async {
     final provider = Provider.of<TrackingProvider>(context, listen: false);
-    final startTime = provider.activeInstance?.startTime ?? DateTime.now();
-    final initialTime = _customEndTime ?? DateTime.now();
+    if (provider.activeInstance == null) return;
+
+    final startTime = provider.activeInstance!.startTime;
+    final now = DateTime.now();
+    final initialTime = _customEndTime ?? now;
 
     // First select date
     final selectedDate = await showDatePicker(
       context: context,
       initialDate: initialTime,
       firstDate: startTime,
-      lastDate: DateTime.now(),
+      lastDate: now,
       helpText: 'Select End Date',
     );
 
@@ -196,8 +199,7 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
       selectedTime.minute,
     );
 
-    // Validate: end time must not be later than now (recalculate for accuracy)
-    final now = DateTime.now();
+    // Validate: end time must not be later than now
     if (combinedDateTime.isAfter(now)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
