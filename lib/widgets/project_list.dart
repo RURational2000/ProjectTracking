@@ -27,6 +27,7 @@ class ProjectList extends StatelessWidget {
             // For Instance mode with active project, use StreamBuilder for live updates
             if (provider.timeDisplayMode == TimeDisplayMode.instance && isActive) {
               return StreamBuilder<void>(
+                initialData: null, // Ensures the builder runs immediately
                 stream: Stream<void>.periodic(const Duration(seconds: 30)),
                 builder: (context, snapshot) {
                   // Directly get current duration without database query
