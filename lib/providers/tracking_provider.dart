@@ -184,8 +184,8 @@ class TrackingProvider with ChangeNotifier {
   /// Get start and end dates for the current week (Monday-Sunday)
   _DateBounds _getWeekBounds() {
     final now = DateTime.now();
-    final daysToSubtract = now.weekday == 1 ? 0 : now.weekday - 1;
-    final startOfWeek = now.subtract(Duration(days: daysToSubtract));
+    // In Dart, DateTime.monday is 1. So, we subtract (weekday - 1) days.
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
     final endDate = startDate.add(const Duration(days: 7));
     return _DateBounds(startDate, endDate);
