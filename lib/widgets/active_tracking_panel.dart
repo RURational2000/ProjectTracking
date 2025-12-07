@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 
 class ActiveTrackingPanel extends StatefulWidget {
@@ -11,6 +12,7 @@ class ActiveTrackingPanel extends StatefulWidget {
 
 class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
   final _noteController = TextEditingController();
+  DateTime? _customEndTime;
 
   @override
   void dispose() {
@@ -58,6 +60,14 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
                               );
                             },
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Start: ${_formatDateTime(provider.activeInstance!.startTime)}',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: 12,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -68,6 +78,28 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red.shade400,
                         foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // End time editor
+                Row(
+                  children: [
+                    Text(
+                      'End Time:',
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: () => _selectEndTime(context),
+                      icon: const Icon(Icons.edit_calendar, size: 18),
+                      label: Text(
+                        _formatDateTime(_customEndTime ?? DateTime.now()),
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ),
                   ],
@@ -126,6 +158,74 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
     return '${mins}m';
   }
 
+  String _formatDateTime(DateTime dateTime) {
+    final formatter = DateFormat('MMM d, y h:mm a');
+    return formatter.format(dateTime);
+  }
+
+  Future<void> _selectEndTime(BuildContext context) async {
+    final provider = Provider.of<TrackingProvider>(context, listen: false);
+    if (provider.activeInstance == null) return;
+
+    final startTime = provider.activeInstance!.startTime;
+    final now = DateTime.now();
+    final initialTime = _customEndTime ?? now;
+
+    // First select date
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: initialTime,
+      firstDate: startTime,
+      lastDate: now,
+      helpText: 'Select End Date',
+    );
+
+    if (selectedDate == null || !context.mounted) return;
+
+    // Then select time
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initialTime),
+      helpText: 'Select End Time',
+    );
+
+    if (selectedTime == null || !context.mounted) return;
+
+    // Combine date and time
+    final combinedDateTime = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+
+    // Validate: end time must not be later than now
+    if (combinedDateTime.isAfter(now)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('End time cannot be in the future'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (combinedDateTime.isBefore(startTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('End time cannot be before start time'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _customEndTime = combinedDateTime;
+    });
+  }
+
   Future<void> _addNote(BuildContext context, TrackingProvider provider) async {
     final content = _noteController.text.trim();
     if (content.isEmpty) {
@@ -148,13 +248,18 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
   Future<void> _endTracking(
       BuildContext context, TrackingProvider provider) async {
     final projectName = provider.activeProject?.name ?? 'Unknown';
-
-    await provider.endCurrentInstance();
+    
+    await provider.endCurrentInstance(customEndTime: _customEndTime);
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ended tracking: $projectName')),
       );
     }
+
+    // Reset custom end time
+    setState(() {
+      _customEndTime = null;
+    });
   }
 }

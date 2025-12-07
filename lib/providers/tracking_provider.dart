@@ -85,10 +85,11 @@ class TrackingProvider with ChangeNotifier {
   }
 
   /// End current instance and accumulate time
-  Future<void> endCurrentInstance() async {
+  /// Accepts optional [customEndTime] to allow time corrections
+  Future<void> endCurrentInstance({DateTime? customEndTime}) async {
     if (_activeInstance == null || _activeProject == null) return;
 
-    final endTime = DateTime.now();
+    final endTime = customEndTime ?? DateTime.now();
     final duration = endTime.difference(_activeInstance!.startTime).inMinutes;
 
     // Update instance
