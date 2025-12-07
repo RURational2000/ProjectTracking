@@ -65,7 +65,8 @@ class DatabaseService {
       )
     ''');
 
-    await db.execute('CREATE INDEX idx_instances_projectId ON instances(projectId)');
+    await db.execute(
+        'CREATE INDEX idx_instances_projectId ON instances(projectId)');
     await db.execute('CREATE INDEX idx_notes_instanceId ON notes(instanceId)');
   }
 
@@ -77,7 +78,8 @@ class DatabaseService {
 
   Future<List<Project>> getAllProjects() async {
     final db = await database;
-    final maps = await db.query('projects', orderBy: 'lastActiveAt DESC, name ASC');
+    final maps =
+        await db.query('projects', orderBy: 'lastActiveAt DESC, name ASC');
     return maps.map((map) => Project.fromMap(map)).toList();
   }
 
@@ -90,7 +92,8 @@ class DatabaseService {
 
   Future<void> updateProject(Project project) async {
     final db = await database;
-    await db.update('projects', project.toMap(), where: 'id = ?', whereArgs: [project.id]);
+    await db.update('projects', project.toMap(),
+        where: 'id = ?', whereArgs: [project.id]);
   }
 
   // Instance operations
@@ -124,7 +127,8 @@ class DatabaseService {
 
   Future<void> updateInstance(Instance instance) async {
     final db = await database;
-    await db.update('instances', instance.toMap(), where: 'id = ?', whereArgs: [instance.id]);
+    await db.update('instances', instance.toMap(),
+        where: 'id = ?', whereArgs: [instance.id]);
   }
 
   // Note operations - only saved when not empty

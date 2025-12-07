@@ -25,14 +25,16 @@ class ProjectList extends StatelessWidget {
             final isActive = provider.activeProject?.id == project.id;
 
             // For Instance mode with active project, use StreamBuilder for live updates
-            if (provider.timeDisplayMode == TimeDisplayMode.instance && isActive) {
+            if (provider.timeDisplayMode == TimeDisplayMode.instance &&
+                isActive) {
               return StreamBuilder<void>(
                 initialData: null, // Ensures the builder runs immediately
                 stream: Stream<void>.periodic(const Duration(seconds: 30)),
                 builder: (context, snapshot) {
                   // Directly get current duration without database query
                   final minutes = provider.getCurrentDuration();
-                  return _buildProjectCard(context, provider, project, isActive, minutes);
+                  return _buildProjectCard(
+                      context, provider, project, isActive, minutes);
                 },
               );
             }
@@ -41,7 +43,8 @@ class ProjectList extends StatelessWidget {
               future: provider.getDisplayTimeForProject(project),
               builder: (context, snapshot) {
                 final minutes = snapshot.data ?? 0;
-                return _buildProjectCard(context, provider, project, isActive, minutes);
+                return _buildProjectCard(
+                    context, provider, project, isActive, minutes);
               },
             );
           },
@@ -87,7 +90,8 @@ class ProjectList extends StatelessWidget {
                 icon: const Icon(Icons.play_circle_outline),
                 onPressed: () => _startProject(context, provider, project),
               ),
-        onTap: isActive ? null : () => _startProject(context, provider, project),
+        onTap:
+            isActive ? null : () => _startProject(context, provider, project),
       ),
     );
   }

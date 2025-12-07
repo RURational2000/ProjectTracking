@@ -68,7 +68,7 @@ class TrackingProvider with ChangeNotifier {
     // Create new instance
     final instance = Instance(projectId: project.id!);
     final instanceId = await dbService.insertInstance(instance);
-    
+
     _activeInstance = instance.copyWith(id: instanceId);
     _activeProject = project;
     _currentNotes = [];
@@ -170,11 +170,13 @@ class TrackingProvider with ChangeNotifier {
 
       case TimeDisplayMode.week:
         final bounds = _getWeekBounds();
-        return await dbService.getProjectMinutesInRange(project.id!, bounds.start, bounds.end);
+        return await dbService.getProjectMinutesInRange(
+            project.id!, bounds.start, bounds.end);
 
       case TimeDisplayMode.month:
         final bounds = _getMonthBounds();
-        return await dbService.getProjectMinutesInRange(project.id!, bounds.start, bounds.end);
+        return await dbService.getProjectMinutesInRange(
+            project.id!, bounds.start, bounds.end);
 
       case TimeDisplayMode.project:
         return project.totalMinutes;
@@ -186,7 +188,8 @@ class TrackingProvider with ChangeNotifier {
     final now = DateTime.now();
     // In Dart, DateTime.monday is 1. So, we subtract (weekday - 1) days.
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+    final startDate =
+        DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
     final endDate = startDate.add(const Duration(days: 7));
     return _DateBounds(startDate, endDate);
   }
@@ -209,7 +212,8 @@ class _DateBounds {
 }
 
 extension NoteCopyWith on Note {
-  Note copyWith({int? id, int? instanceId, String? content, DateTime? createdAt}) {
+  Note copyWith(
+      {int? id, int? instanceId, String? content, DateTime? createdAt}) {
     return Note(
       id: id ?? this.id,
       instanceId: instanceId ?? this.instanceId,
