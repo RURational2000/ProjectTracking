@@ -6,9 +6,50 @@ A cross-platform time tracking application for managing projects with instance-b
 
 - **Project Management**: Create and select projects to track
 - **Instance Tracking**: Start/stop work sessions (instances) with automatic time accumulation
+- **Time Display Modes**: View project time as current instance, daily, weekly, monthly, or complete totals
 - **Multiple Notes**: Add multiple notes per instance, saved only when non-empty
 - **Dual Storage**: SQLite database for querying + text file logs for verification
 - **Cross-Platform**: Runs on Android, iOS, Windows, and Linux
+
+### Time Display Modes
+
+The app includes a global time display mode selector (clock icon in the app bar) that allows you to view project time in different contexts:
+
+#### Available Modes
+
+1. **Instance Mode**
+   - Shows the duration of the currently active instance
+   - Updates every 30 seconds for real-time tracking
+   - Only active project shows time (others show 0)
+   - Label format: "Instance: Xh Ym"
+
+2. **Day Mode**
+   - Shows total time worked on each project today
+   - Includes all completed instances that started today
+   - Label format: "Day: Xh Ym"
+
+3. **Week Mode**
+   - Shows total time worked this week (Monday-Sunday)
+   - Includes all completed instances from the current week
+   - Label format: "Week: Xh Ym"
+
+4. **Month Mode**
+   - Shows total time worked this month
+   - Includes all completed instances from the current month
+   - Label format: "Month: Xh Ym"
+
+5. **Project Mode** (Default)
+   - Shows the complete accumulated time for each project
+   - This is the original behavior
+   - Label format: "Project: Xh Ym"
+
+#### How to Use
+
+1. Tap the clock icon (⏰) in the top-right corner of the app bar
+2. Select your desired display mode from the popup menu
+3. The selected mode is indicated with a checkmark (✓)
+4. Project times update automatically to reflect the selected view
+5. Mode selection persists in memory until the app is restarted
 
 ## Architecture
 
@@ -27,6 +68,16 @@ A cross-platform time tracking application for managing projects with instance-b
 - Time is accumulated at the project level from completed instances
 - Each project gets its own log file: `{ProjectName}_log.txt`
 
+### Time Display Implementation
+
+The time display modes feature uses efficient database queries to calculate time based on the selected view:
+
+- **Instance Mode**: Calculates duration from active instance start time (no database query needed)
+- **Day/Week/Month Modes**: SQL `SUM(durationMinutes)` queries with date range filters
+- **Project Mode**: Uses pre-accumulated `totalMinutes` from project table
+- All queries use existing database indexes for optimal performance
+- Only completed instances (with `endTime`) are included in calculations
+
 ## Project Structure
 
 ```
@@ -43,7 +94,11 @@ linux - build items for linux
 test - container Project Tracking unit tests
 lib/
 ├── main.dart                          # App initialization with service setup
-├── models/                            # Data models (Project, Instance, Note)
+├── models/                            # Data models
+│   ├── project.dart                   # Project model
+│   ├── instance.dart                  # Instance model
+│   ├── note.dart                      # Note model
+│   └── time_display_mode.dart         # Time display mode enum
 ├── services/
 │   ├── database_service.dart         # SQLite operations
 │   └── file_logging_service.dart     # Text file logging
