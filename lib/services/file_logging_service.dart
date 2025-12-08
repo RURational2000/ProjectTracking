@@ -21,7 +21,8 @@ class FileLoggingService {
 
   /// Logs instance start event
   Future<void> logInstanceStart(Project project, Instance instance) async {
-    final timestamp = DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.startTime);
+    final timestamp =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.startTime);
     final content = '''
 ================================================================================
 PROJECT: ${project.name} (ID: ${project.id})
@@ -42,8 +43,10 @@ Instance ID: ${instance.id}
   ) async {
     if (instance.endTime == null) return;
 
-    final startFormat = DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.startTime);
-    final endFormat = DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.endTime!);
+    final startFormat =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.startTime);
+    final endFormat =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.endTime!);
     final duration = _formatDuration(instance.durationMinutes);
 
     final buffer = StringBuffer();
@@ -61,7 +64,8 @@ Instance ID: ${instance.id}
       }
     }
 
-    buffer.writeln('================================================================================\n');
+    buffer.writeln(
+        '================================================================================\n');
 
     await _appendToLog(project.name, buffer.toString());
   }
@@ -83,10 +87,11 @@ Content: ${note.content}
   /// Appends content to project-specific log file
   Future<void> _appendToLog(String projectName, String content) async {
     // Sanitize project name for filename
-    final sanitized = projectName.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+    final sanitized =
+        projectName.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
     final filename = '${sanitized}_log.txt';
     final file = File(path.join(_logDirectory!, filename));
-    
+
     await file.writeAsString(content, mode: FileMode.append);
   }
 

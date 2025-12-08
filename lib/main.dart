@@ -9,27 +9,27 @@ import 'package:project_tracking/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize sqflite for desktop platforms
   if (Platform.isWindows || Platform.isLinux) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
-  
+
   // Initialize services
   final dbService = DatabaseService();
   await dbService.initialize();
-  
+
   final fileService = FileLoggingService();
   await fileService.initialize();
-  
+
   runApp(MyApp(dbService: dbService, fileService: fileService));
 }
 
 class MyApp extends StatelessWidget {
   final DatabaseService dbService;
   final FileLoggingService fileService;
-  
+
   const MyApp({
     super.key,
     required this.dbService,

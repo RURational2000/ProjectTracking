@@ -30,7 +30,7 @@ class Instance {
       id: map['id'] as int?,
       projectId: map['projectId'] as int,
       startTime: DateTime.parse(map['startTime'] as String),
-      endTime: map['endTime'] != null 
+      endTime: map['endTime'] != null
           ? DateTime.parse(map['endTime'] as String)
           : null,
       durationMinutes: map['durationMinutes'] as int? ?? 0,

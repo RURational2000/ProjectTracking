@@ -50,7 +50,8 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
                             ),
                           ),
                           StreamBuilder(
-                            stream: Stream.periodic(const Duration(seconds: 30)),
+                            stream:
+                                Stream.periodic(const Duration(seconds: 30)),
                             builder: (context, snapshot) {
                               final duration = provider.getCurrentDuration();
                               return Text(
@@ -244,7 +245,8 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
     }
   }
 
-  Future<void> _endTracking(BuildContext context, TrackingProvider provider) async {
+  Future<void> _endTracking(
+      BuildContext context, TrackingProvider provider) async {
     final projectName = provider.activeProject?.name ?? 'Unknown';
     
     await provider.endCurrentInstance(customEndTime: _customEndTime);

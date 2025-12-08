@@ -65,7 +65,8 @@ class DatabaseService {
       )
     ''');
 
-    await db.execute('CREATE INDEX idx_instances_projectId ON instances(projectId)');
+    await db.execute(
+        'CREATE INDEX idx_instances_projectId ON instances(projectId)');
     await db.execute('CREATE INDEX idx_notes_instanceId ON notes(instanceId)');
   }
 
@@ -77,7 +78,8 @@ class DatabaseService {
 
   Future<List<Project>> getAllProjects() async {
     final db = await database;
-    final maps = await db.query('projects', orderBy: 'lastActiveAt DESC, name ASC');
+    final maps =
+        await db.query('projects', orderBy: 'lastActiveAt DESC, name ASC');
     return maps.map((map) => Project.fromMap(map)).toList();
   }
 
@@ -90,7 +92,8 @@ class DatabaseService {
 
   Future<void> updateProject(Project project) async {
     final db = await database;
-    await db.update('projects', project.toMap(), where: 'id = ?', whereArgs: [project.id]);
+    await db.update('projects', project.toMap(),
+        where: 'id = ?', whereArgs: [project.id]);
   }
 
   // Instance operations
@@ -124,7 +127,8 @@ class DatabaseService {
 
   Future<void> updateInstance(Instance instance) async {
     final db = await database;
-    await db.update('instances', instance.toMap(), where: 'id = ?', whereArgs: [instance.id]);
+    await db.update('instances', instance.toMap(),
+        where: 'id = ?', whereArgs: [instance.id]);
   }
 
   // Note operations - only saved when not empty
@@ -145,5 +149,50 @@ class DatabaseService {
       orderBy: 'createdAt ASC',
     );
     return maps.map((map) => Note.fromMap(map)).toList();
+  }
+
+  /// Get total minutes for a project on a specific date
+  Future<int> getProjectMinutesForDate(int projectId, DateTime date) async {
+    final db = await database;
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    final result = await db.rawQuery('''
+      SELECT SUM(durationMinutes) as total
+      FROM instances
+      WHERE projectId = ?
+        AND endTime IS NOT NULL
+        AND startTime >= ?
+        AND startTime < ?
+    ''', [projectId, startOfDay.toIso8601String(), endOfDay.toIso8601String()]);
+
+    return _extractTotalMinutes(result);
+  }
+
+  /// Get total minutes for a project in a date range
+  Future<int> getProjectMinutesInRange(
+    int projectId,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    final db = await database;
+
+    final result = await db.rawQuery('''
+      SELECT SUM(durationMinutes) as total
+      FROM instances
+      WHERE projectId = ?
+        AND endTime IS NOT NULL
+        AND startTime >= ?
+        AND startTime < ?
+    ''', [projectId, startDate.toIso8601String(), endDate.toIso8601String()]);
+
+    return _extractTotalMinutes(result);
+  }
+
+  /// Helper method to extract total minutes from query result
+  int _extractTotalMinutes(List<Map<String, Object?>> result) {
+    if (result.isEmpty) return 0;
+    final total = result.first['total'];
+    return total != null ? (total as num).toInt() : 0;
   }
 }

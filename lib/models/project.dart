@@ -29,7 +29,7 @@ class Project {
       name: map['name'] as String,
       totalMinutes: map['totalMinutes'] as int? ?? 0,
       createdAt: DateTime.parse(map['createdAt'] as String),
-      lastActiveAt: map['lastActiveAt'] != null 
+      lastActiveAt: map['lastActiveAt'] != null
           ? DateTime.parse(map['lastActiveAt'] as String)
           : null,
     );
