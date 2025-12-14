@@ -6,7 +6,7 @@ This guide explains how to test the Project Tracking app on Android devices and 
 
 - Flutter SDK installed and configured
 - Android SDK installed (comes with Android Studio or Flutter setup)
-- Java Development Kit (JDK) 11
+- Java Development Kit (JDK) 17
 
 ## Testing Methods
 
