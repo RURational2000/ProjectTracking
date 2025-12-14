@@ -248,7 +248,7 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
   Future<void> _endTracking(
       BuildContext context, TrackingProvider provider) async {
     final projectName = provider.activeProject?.name ?? 'Unknown';
-    
+
     await provider.endCurrentInstance(customEndTime: _customEndTime);
 
     if (context.mounted) {
