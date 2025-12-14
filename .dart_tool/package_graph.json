@@ -22,7 +22,7 @@
     },
     {
       "name": "flutter_lints",
-      "version": "3.0.2",
+      "version": "6.0.0",
       "dependencies": [
         "lints"
       ]
@@ -67,7 +67,7 @@
     },
     {
       "name": "intl",
-      "version": "0.18.1",
+      "version": "0.20.2",
       "dependencies": [
         "clock",
         "meta",
@@ -117,7 +117,7 @@
     },
     {
       "name": "lints",
-      "version": "3.0.0",
+      "version": "6.0.0",
       "dependencies": []
     },
     {
@@ -264,15 +264,17 @@
     },
     {
       "name": "path_provider_foundation",
-      "version": "2.4.3",
+      "version": "2.5.0",
       "dependencies": [
+        "ffi",
         "flutter",
+        "objective_c",
         "path_provider_platform_interface"
       ]
     },
     {
       "name": "path_provider_android",
-      "version": "2.2.20",
+      "version": "2.2.22",
       "dependencies": [
         "flutter",
         "path_provider_platform_interface"
@@ -422,9 +424,26 @@
       ]
     },
     {
+      "name": "objective_c",
+      "version": "9.1.0",
+      "dependencies": [
+        "collection",
+        "ffi",
+        "flutter",
+        "pub_semver"
+      ]
+    },
+    {
       "name": "vm_service",
       "version": "15.0.2",
       "dependencies": []
+    },
+    {
+      "name": "pub_semver",
+      "version": "2.2.0",
+      "dependencies": [
+        "collection"
+      ]
     }
   ],
   "configVersion": 1

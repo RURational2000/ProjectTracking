@@ -36,7 +36,7 @@ migrate_working_dir/
 build/
 coverage/
 doc/api/
-generated_plugin_registrant.dart # For older Flutter versions, newer versions handle this differently
+generated_plugin_registrant.* # For older Flutter versions, newer versions handle this differently
 version.json # For older Flutter versions, newer versions handle this differently
 
 # Symbolication related
@@ -51,6 +51,7 @@ app.*.map.json
 /android/app/release
 /android/build/
 android/.gradle/
+android/.gradle/buildOutputCleanup/
 android/captures/
 android/gradlew
 android/gradlew.bat
@@ -58,7 +59,7 @@ android/key.properties
 android/local.properties
 android/**/*.jks # Keystore files
 android/**/.cxx/
-android/**/GeneratedPluginRegistrant.java # For older Flutter versions, newer versions handle this differently
+android/**/GeneratedPluginRegistrant.* # For older Flutter versions, newer versions handle this differently
 
 # Windows build artifacts
 /windows/flutter/ephemeral/
@@ -77,6 +78,8 @@ android/**/GeneratedPluginRegistrant.java # For older Flutter versions, newer ve
 /ios/Pods/
 /ios/.symlinks/
 /ios/Flutter/.last_build_id
+/ios/Runner/GeneratedPluginRegistrant.m
+/ios/Runner/GeneratedPluginRegistrant.h
 ios/.symlinks/
 ios/Flutter/Generated.xcconfig
 ios/Pods/
