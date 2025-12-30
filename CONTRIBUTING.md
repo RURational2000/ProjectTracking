@@ -47,6 +47,7 @@ git checkout -b fix/bug-description
 ```
 
 Branch naming conventions:
+
 - `feature/` - for new features
 - `fix/` - for bug fixes
 - `docs/` - for documentation changes
@@ -56,12 +57,14 @@ Branch naming conventions:
 ### 4. Make Your Changes
 
 Follow the project's architecture patterns (see `.github/copilot-instructions.md`):
+
 - **Dual-Write Consistency**: Database writes must have corresponding file logs
 - **State Management**: Use Provider pattern with `TrackingProvider`
 - **Empty Note Validation**: Validate notes before saving
 - **Time Accumulation**: Update project totals when ending instances
 
 Key files to understand:
+
 - `lib/models/` - Data models
 - `lib/services/` - Database and file logging
 - `lib/providers/` - State management
@@ -92,6 +95,7 @@ git commit -m "Add feature: brief description of what you added"
 ```
 
 Good commit message examples:
+
 - `Add: Project export functionality`
 - `Fix: Instance timing calculation bug`
 - `Docs: Update README with installation steps`
@@ -128,6 +132,7 @@ git push origin feature/your-feature-name
 ### Code Style
 
 Follow Dart/Flutter best practices:
+
 - Use `flutter analyze` to check for issues
 - Format code with `dart format .`
 - Follow the existing code style in the project
@@ -161,6 +166,7 @@ Before submitting your PR, verify:
 ## Getting Help
 
 If you have questions:
+
 - Check the [README.md](README.md) for project overview
 - Review `.github/copilot-instructions.md` for architecture details
 - Open an issue for discussion before major changes
