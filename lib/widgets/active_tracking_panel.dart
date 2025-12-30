@@ -86,9 +86,9 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
                 // End time editor
                 Row(
                   children: [
-                    Text(
+                    const Text(
                       'End Time:',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.grey,
                         fontWeight: FontWeight.w500,
                       ),
@@ -248,7 +248,7 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
   Future<void> _endTracking(
       BuildContext context, TrackingProvider provider) async {
     final projectName = provider.activeProject?.name ?? 'Unknown';
-    
+
     await provider.endCurrentInstance(customEndTime: _customEndTime);
 
     if (context.mounted) {
