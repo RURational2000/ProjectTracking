@@ -1,19 +1,23 @@
 # Project Tracking App
 
-A cross-platform time tracking application for managing projects with instance-based logging and notes.
+A cross-platform time tracking application for managing projects with
+instance-based logging and notes.
 
 ## Features
 
 - **Project Management**: Create and select projects to track
-- **Instance Tracking**: Start/stop work sessions (instances) with automatic time accumulation
-- **Time Display Modes**: View project time as current instance, daily, weekly, monthly, or complete totals
+- **Instance Tracking**: Start/stop work sessions (instances) with automatic
+  time accumulation
+- **Time Display Modes**: View project time as current instance, daily, weekly,
+  monthly, or complete totals
 - **Multiple Notes**: Add multiple notes per instance, saved only when non-empty
 - **Dual Storage**: SQLite database for querying + text file logs for verification
 - **Cross-Platform**: Runs on Android, iOS, Windows, and Linux
 
 ### Time Display Modes
 
-The app includes a global time display mode selector (clock icon in the app bar) that allows you to view project time in different contexts:
+The app includes a global time display mode selector (clock icon in the
+app bar) that allows you to view project time in different contexts:
 
 #### Available Modes
 
@@ -54,15 +58,20 @@ The app includes a global time display mode selector (clock icon in the app bar)
 ## Architecture
 
 ### Data Model
+
 - **Project**: Container with accumulated time across all instances
 - **Instance**: Single work session with start/end timestamps
 - **Note**: Text entry associated with an instance
 
 ### Storage Strategy
-1. **SQLite Database** (`DatabaseService`): Primary storage for structured queries and relationships
-2. **Text File Logs** (`FileLoggingService`): Human-readable audit trail per project
+
+1. **SQLite Database** (`DatabaseService`): Primary storage for structured
+   queries and relationships
+2. **Text File Logs** (`FileLoggingService`): Human-readable audit trail
+   per project
 
 ### Key Behaviors
+
 - Starting a new project automatically ends the previous active instance
 - Notes are validated (non-empty) before saving to database and log files
 - Time is accumulated at the project level from completed instances
@@ -70,21 +79,26 @@ The app includes a global time display mode selector (clock icon in the app bar)
 
 ### Time Display Implementation
 
-The time display modes feature uses efficient database queries to calculate time based on the selected view:
+The time display modes feature uses efficient database queries to calculate
+time based on the selected view:
 
-- **Instance Mode**: Calculates duration from active instance start time (no database query needed)
-- **Day/Week/Month Modes**: SQL `SUM(durationMinutes)` queries with date range filters
+- **Instance Mode**: Calculates duration from active instance start time
+  (no database query needed)
+- **Day/Week/Month Modes**: SQL `SUM(durationMinutes)` queries with date
+  range filters
 - **Project Mode**: Uses pre-accumulated `totalMinutes` from project table
 - All queries use existing database indexes for optimal performance
 - Only completed instances (with `endTime`) are included in calculations
 
 ## Project Structure
 
-```
-.gitignore - files and folders to ignore, including build, auto-generated, and deployment items
+```text
+.gitignore - files and folders to ignore, including build, auto-generated,
+             and deployment items
 README.md - main instructions for the app
 pubspec.yaml - flutter configuration file
-.dart_tool - local repository of tools and dependencies used by the flutter pub command
+.dart_tool - local repository of tools and dependencies used by the
+             flutter pub command
 .github - workflows and git hub specific instructions
 .idea - folder containing android development studio artifacts; needed for development
 android - gradle build items
@@ -115,15 +129,18 @@ lib/
 ## Development
 
 ### Prerequisites
+
 - Flutter SDK 3.0+
 - Dart 3.0+
 
 ### Setup
+
 ```bash
 flutter pub get
 ```
 
 ### Run
+
 ```bash
 # Desktop (Windows/Linux)
 flutter run -d windows
@@ -135,20 +152,25 @@ flutter run -d ios
 ```
 
 ### Database Location
+
 - **Android**: `/data/data/com.example.project_tracking/databases/`
 - **iOS**: App's Documents directory
 - **Windows**: `%APPDATA%\com.example\project_tracking\databases\`
 - **Linux**: `~/.local/share/project_tracking/databases/`
 
 ### Log Files Location
-- **All platforms**: Application Documents directory under `ProjectTrackingLogs/`
+
+- **All platforms**: Application Documents directory under
+  `ProjectTrackingLogs/`
 
 ## Testing
+
 ```bash
 flutter test
 ```
 
 ## Build
+
 ```bash
 # Android APK
 flutter build apk
@@ -162,7 +184,9 @@ flutter build ios
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on how to:
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for
+detailed guidelines on how to:
+
 - Set up your development environment
 - Create and submit pull requests
 - Follow code quality standards

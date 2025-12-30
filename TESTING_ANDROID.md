@@ -1,6 +1,7 @@
 # Testing Android Builds
 
-This guide explains how to test the Project Tracking app on Android devices and emulators.
+This guide explains how to test the Project Tracking app on Android devices
+and emulators.
 
 ## Prerequisites
 
@@ -182,18 +183,18 @@ flutter build apk --release
 
 ## Common Commands Reference
 
-| Command | Description |
-|---------|-------------|
-| `flutter devices` | List all connected devices and emulators |
-| `flutter emulators` | List available emulators |
-| `flutter emulators --launch <id>` | Start a specific emulator |
-| `flutter run` | Build and run on connected device |
-| `flutter run -d <device>` | Run on specific device |
-| `flutter build apk` | Build APK file |
-| `flutter build appbundle` | Build app bundle for Play Store |
-| `flutter clean` | Clean build artifacts |
-| `adb devices` | List connected Android devices (via ADB) |
-| `adb install <apk_path>` | Install APK via ADB |
+| Command                           | Description                         |
+|-----------------------------------|-------------------------------------|
+| `flutter devices`                 | List connected devices/emulators    |
+| `flutter emulators`               | List available emulators            |
+| `flutter emulators --launch <id>` | Start a specific emulator           |
+| `flutter run`                     | Build and run on connected device   |
+| `flutter run -d <device>`         | Run on specific device              |
+| `flutter build apk`               | Build APK file                      |
+| `flutter build appbundle`         | Build app bundle for Play Store     |
+| `flutter clean`                   | Clean build artifacts               |
+| `adb devices`                     | List connected Android devices      |
+| `adb install <apk_path>`          | Install APK via ADB                 |
 
 ---
 
