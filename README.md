@@ -57,6 +57,9 @@ app bar) that allows you to view project time in different contexts:
 
 ## Architecture
 
+- Main branch relegated to Supabase backend
+- SQLite used for local data storage and querying on LocalDbBranch
+
 ### Data Model
 
 - **Project**: Container with accumulated time across all instances
