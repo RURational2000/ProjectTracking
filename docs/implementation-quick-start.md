@@ -96,10 +96,14 @@ import 'package:project_tracking/models/note.dart';
 /// Manages Projects, Instances (work sessions), and Notes with time accumulation.
 class DatabaseService {
   final SupabaseClient _client = Supabase.instance.client;
-  
   Future<void> initialize() async {
-    // Supabase is initialized in main.dart
-    // This method can be used for any additional setup if needed
+    _connection ??= MssqlConnection.getInstance();
+  
+    if (_connection!.isConnected) {
+      return;
+    }
+
+    bool isConnected = await _connection!.connect(
   }
   
   Future<int> insertProject(Project project) async {
