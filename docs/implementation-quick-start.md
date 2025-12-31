@@ -155,11 +155,9 @@ CREATE TABLE instances (
   endTime TIMESTAMPTZ,
   durationMinutes INTEGER NOT NULL DEFAULT 0,
   CONSTRAINT fk_instances_projects FOREIGN KEY (projectId) 
-    REFERENCES projects (id) ON DELETE CASCADE,
-  -- Ensure instance user_id matches project user_id for data integrity
-  CONSTRAINT check_user_project_match CHECK (
-    user_id = (SELECT user_id FROM projects WHERE id = projectId)
-  )
+    REFERENCES projects (id) ON DELETE CASCADE
+  -- Note: user_id verification is handled by RLS policies and application logic
+  -- A CHECK constraint with subquery would impact INSERT/UPDATE performance
 );
 
 -- Notes table
@@ -445,7 +443,7 @@ class DatabaseService {
         .insert({
           'user_id': userId,
           'name': project.name,
-          'status': project.status ?? 'active',
+          // 'status' field has DEFAULT 'active' in database
           'totalMinutes': project.totalMinutes,
           'createdAt': project.createdAt.toIso8601String(),
           'lastActiveAt': project.lastActiveAt?.toIso8601String(),
@@ -601,9 +599,20 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize Supabase with environment variables
+  // Validate that environment variables are set
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  
+  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    throw Exception(
+      'Supabase configuration missing. Please set SUPABASE_URL and '
+      'SUPABASE_ANON_KEY environment variables.'
+    );
+  }
+  
   await Supabase.initialize(
-    url: const String.fromEnvironment('SUPABASE_URL'),
-    anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   );
   
   // Initialize services
@@ -796,10 +805,21 @@ import 'package:project_tracking/screens/auth_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Supabase
+  // Initialize Supabase with environment variables
+  // Validate that environment variables are set
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  
+  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    throw Exception(
+      'Supabase configuration missing. Please set SUPABASE_URL and '
+      'SUPABASE_ANON_KEY environment variables.'
+    );
+  }
+  
   await Supabase.initialize(
-    url: const String.fromEnvironment('SUPABASE_URL'),
-    anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   );
   
   // Initialize services
