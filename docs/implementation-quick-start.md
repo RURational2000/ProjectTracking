@@ -156,8 +156,9 @@ CREATE TABLE instances (
   durationMinutes INTEGER NOT NULL DEFAULT 0,
   CONSTRAINT fk_instances_projects FOREIGN KEY (projectId) 
     REFERENCES projects (id) ON DELETE CASCADE
-  -- Note: user_id verification is handled by RLS policies and application logic
-  -- A CHECK constraint with subquery would impact INSERT/UPDATE performance
+  -- Note: A CHECK constraint verifying user_id matches the project owner
+  -- would impact INSERT/UPDATE performance due to subquery execution.
+  -- User ownership verification is handled by RLS policies and application logic.
 );
 
 -- Notes table
@@ -605,8 +606,9 @@ Future<void> main() async {
   
   if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
     throw Exception(
-      'Supabase configuration missing. Please set SUPABASE_URL and '
-      'SUPABASE_ANON_KEY environment variables.'
+      'Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY. '
+      'Please configure these variables before running the application. '
+      'See environment configuration section for details.'
     );
   }
   
@@ -812,8 +814,9 @@ Future<void> main() async {
   
   if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
     throw Exception(
-      'Supabase configuration missing. Please set SUPABASE_URL and '
-      'SUPABASE_ANON_KEY environment variables.'
+      'Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY. '
+      'Please configure these variables before running the application. '
+      'See environment configuration section for details.'
     );
   }
   
