@@ -5,13 +5,15 @@ instance-based logging and notes.
 
 ## Features
 
-- **Project Management**: Create and select projects to track
+- **Project Management**: Create and select projects to track with status tracking
 - **Instance Tracking**: Start/stop work sessions (instances) with automatic
   time accumulation
 - **Time Display Modes**: View project time as current instance, daily, weekly,
   monthly, or complete totals
 - **Multiple Notes**: Add multiple notes per instance, saved only when non-empty
-- **Dual Storage**: SQLite database for querying + text file logs for verification
+- **Cloud Storage**: Supabase-powered PostgreSQL database with real-time synchronization
+- **Multi-User Support**: Individual user identification with Row-Level Security
+- **Dual Storage**: Cloud database for querying + text file logs for local verification
 - **Cross-Platform**: Runs on Android, iOS, Windows, and Linux
 
 ### Time Display Modes
@@ -59,16 +61,16 @@ app bar) that allows you to view project time in different contexts:
 
 ### Data Model
 
-- **Project**: Container with accumulated time across all instances
+- **Project**: Container with accumulated time across all instances, owned by a user
 - **Instance**: Single work session with start/end timestamps
 - **Note**: Text entry associated with an instance
 
 ### Storage Strategy
 
-1. **SQLite Database** (`DatabaseService`): Primary storage for structured
-   queries and relationships
+1. **Supabase (PostgreSQL)** (`DatabaseService`): Cloud-based primary storage for structured
+   queries, relationships, and multi-user support with real-time synchronization
 2. **Text File Logs** (`FileLoggingService`): Human-readable audit trail
-   per project
+   per project (local device storage)
 
 ### Key Behaviors
 
@@ -153,10 +155,11 @@ flutter run -d ios
 
 ### Database Location
 
-- **Android**: `/data/data/com.example.project_tracking/databases/`
-- **iOS**: App's Documents directory
-- **Windows**: `%APPDATA%\com.example\project_tracking\databases\`
-- **Linux**: `~/.local/share/project_tracking/databases/`
+**Supabase Cloud Database:**
+- Centralized PostgreSQL database hosted on Supabase
+- Accessible from all devices with internet connection
+- Provides authentication, real-time sync, and Row-Level Security
+- See [implementation-quick-start.md](docs/implementation-quick-start.md) for setup details
 
 ### Log Files Location
 
