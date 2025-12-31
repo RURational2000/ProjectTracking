@@ -155,7 +155,11 @@ CREATE TABLE instances (
   endTime TIMESTAMPTZ,
   durationMinutes INTEGER NOT NULL DEFAULT 0,
   CONSTRAINT fk_instances_projects FOREIGN KEY (projectId) 
-    REFERENCES projects (id) ON DELETE CASCADE
+    REFERENCES projects (id) ON DELETE CASCADE,
+  -- Ensure instance user_id matches project user_id for data integrity
+  CONSTRAINT check_user_project_match CHECK (
+    user_id = (SELECT user_id FROM projects WHERE id = projectId)
+  )
 );
 
 -- Notes table
@@ -208,17 +212,42 @@ CREATE POLICY "Users can delete own projects" ON projects
   FOR DELETE USING (auth.uid() = user_id);
 
 -- Instances: Users can only access instances of their own projects
+-- Note: This policy verifies ownership through the projects table
 CREATE POLICY "Users can view own instances" ON instances
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM projects 
+      WHERE projects.id = instances.projectId 
+      AND projects.user_id = auth.uid()
+    )
+  );
 
 CREATE POLICY "Users can insert own instances" ON instances
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM projects 
+      WHERE projects.id = instances.projectId 
+      AND projects.user_id = auth.uid()
+    )
+  );
 
 CREATE POLICY "Users can update own instances" ON instances
-  FOR UPDATE USING (auth.uid() = user_id);
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM projects 
+      WHERE projects.id = instances.projectId 
+      AND projects.user_id = auth.uid()
+    )
+  );
 
 CREATE POLICY "Users can delete own instances" ON instances
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM projects 
+      WHERE projects.id = instances.projectId 
+      AND projects.user_id = auth.uid()
+    )
+  );
 
 -- Notes: Users can only access notes on their own instances
 CREATE POLICY "Users can view notes on own instances" ON notes
@@ -408,7 +437,7 @@ class DatabaseService {
   Future<int> insertProject(Project project) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw Exception('User not authenticated');
+      throw Exception('User not authenticated. Please sign in to create projects.');
     }
     
     final response = await _client
@@ -481,7 +510,7 @@ class DatabaseService {
   Future<int> insertInstance(Instance instance) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw Exception('User not authenticated');
+      throw Exception('User not authenticated. Please sign in to track time.');
     }
     
     final response = await _client
@@ -555,8 +584,11 @@ class DatabaseService {
 
 ### 4. Initialize Supabase in main.dart
 
+**Note:** This is a basic initialization example. For production use with authentication, 
+see the complete implementation in Section 5 below.
+
 ```dart
-// lib/main.dart
+// lib/main.dart (basic version without authentication)
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
@@ -568,12 +600,10 @@ import 'package:project_tracking/screens/home_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Supabase
-  // IMPORTANT: Replace with your actual Supabase project credentials
-  // DO NOT commit real credentials to version control
+  // Initialize Supabase with environment variables
   await Supabase.initialize(
-    url: 'YOUR_SUPABASE_URL',
-    anonKey: 'YOUR_SUPABASE_ANON_KEY',
+    url: const String.fromEnvironment('SUPABASE_URL'),
+    anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
   );
   
   // Initialize services
