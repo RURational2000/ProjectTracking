@@ -41,8 +41,6 @@ Step-by-step guide for implementing Supabase:
 
 ## 🎯 Quick Reference
 
-**Start Here:** [../DATABASE_MIGRATION_SUMMARY.md](../DATABASE_MIGRATION_SUMMARY.md) - Executive summary in the root directory
-
 **Selected Database:** Supabase (PostgreSQL + Backend-as-a-Service)
 
 **Why Supabase?**
@@ -61,9 +59,8 @@ Step-by-step guide for implementing Supabase:
 
 ## 🚀 Getting Started
 
-1. **Read the Summary** - Start with [DATABASE_MIGRATION_SUMMARY.md](../DATABASE_MIGRATION_SUMMARY.md) in the root directory
-2. **Review Full Analysis** - Read [database-alternatives-consideration.md](database-alternatives-consideration.md) for detailed evaluation
-3. **Implement** - Follow [implementation-quick-start.md](implementation-quick-start.md)
+1. **Review Full Analysis** - Read [database-alternatives-consideration.md](database-alternatives-consideration.md) for detailed evaluation
+2. **Implement** - Follow [implementation-quick-start.md](implementation-quick-start.md)
 
 ## 📋 Decision Points
 
@@ -102,7 +99,6 @@ Step-by-step guide for implementing Supabase:
 
 ## 🔗 Related Files
 
-- [../DATABASE_MIGRATION_SUMMARY.md](../DATABASE_MIGRATION_SUMMARY.md) - Quick reference summary
 - [../README.md](../README.md) - Main project README
 - [../CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution guidelines
 
