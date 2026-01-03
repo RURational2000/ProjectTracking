@@ -156,6 +156,7 @@ flutter run -d ios
 ### Database Location
 
 **Supabase Cloud Database:**
+
 - Centralized PostgreSQL database hosted on Supabase
 - Accessible from all devices with internet connection
 - Provides authentication, real-time sync, and Row-Level Security
