@@ -223,9 +223,10 @@ CREATE POLICY "Users can delete own projects" ON projects
   FOR DELETE USING (auth.uid() = user_id);
 
 -- Instances: Users can only access instances of their own projects
--- Note: This policy verifies ownership through the projects table
+-- Note: This policy verifies ownership through the projects table AND the instance's user_id
 CREATE POLICY "Users can view own instances" ON instances
   FOR SELECT USING (
+    auth.uid() = user_id AND
     EXISTS (
       SELECT 1 FROM projects 
       WHERE projects.id = instances.projectId 
@@ -235,6 +236,7 @@ CREATE POLICY "Users can view own instances" ON instances
 
 CREATE POLICY "Users can insert own instances" ON instances
   FOR INSERT WITH CHECK (
+    auth.uid() = user_id AND
     EXISTS (
       SELECT 1 FROM projects 
       WHERE projects.id = instances.projectId 
@@ -244,6 +246,7 @@ CREATE POLICY "Users can insert own instances" ON instances
 
 CREATE POLICY "Users can update own instances" ON instances
   FOR UPDATE USING (
+    auth.uid() = user_id AND
     EXISTS (
       SELECT 1 FROM projects 
       WHERE projects.id = instances.projectId 
@@ -253,6 +256,7 @@ CREATE POLICY "Users can update own instances" ON instances
 
 CREATE POLICY "Users can delete own instances" ON instances
   FOR DELETE USING (
+    auth.uid() = user_id AND
     EXISTS (
       SELECT 1 FROM projects 
       WHERE projects.id = instances.projectId 
