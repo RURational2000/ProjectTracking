@@ -12,11 +12,13 @@
 ## GitHub Project Management Setup
 
 ### Overview
+
 It is recommended to maintain a separate GitHub repository for Supabase-specific configurations, SQL migration scripts, and database documentation. This keeps database schema management separate from the Flutter application code while allowing version control and collaboration.
 
 ### Creating a Supabase Configuration Repository
 
 **1. Create New GitHub Repository:**
+
 ```bash
 # Recommended repository name
 ProjectTracking-Supabase-Config
@@ -46,6 +48,7 @@ ProjectTracking-Supabase-Config
 **2. Link Repositories:**
 
 In your main `ProjectTracking` repository's README.md, add a reference:
+
 ```markdown
 ## Database Configuration
 
@@ -56,6 +59,7 @@ configuration are maintained in a separate repository:
 ```
 
 In your `ProjectTracking-Supabase-Config` repository's README.md:
+
 ```markdown
 ## ProjectTracking Supabase Configuration
 
@@ -78,6 +82,7 @@ When making database schema changes:
 6. Create pull requests in both repositories, linking them together
 
 **Example Migration File Structure:**
+
 ```sql
 -- Migration: 004_add_project_tags.sql
 -- Description: Add tags support for projects
@@ -106,6 +111,7 @@ CREATE INDEX idx_projects_tags ON projects USING GIN(tags);
 - **Production:** Production Supabase project with automated backups
 
 Maintain separate `.env` files for each environment (never commit to git):
+
 ```env
 # .env.development
 SUPABASE_URL=https://your-dev-project.supabase.co
@@ -131,13 +137,17 @@ SUPABASE_ANON_KEY=your-prod-anon-key
 4. Wait for project to finish provisioning (~2 minutes)
 
 **SQL Setup Script:**
+
 ```sql
 -- Projects table with user ownership and status tracking
 CREATE TABLE projects (
   id BIGSERIAL PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  parent_project_id BIGINT REFERENCES projects(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'on_hold', 'archived')),
+  status TEXT NOT NULL DEFAULT 'active' 
+    CHECK (status IN ('active', 'completed', 'on_hold', 'reset', 'canceled')),
+  archived BOOLEAN NOT NULL DEFAULT false,
   totalMinutes INTEGER NOT NULL DEFAULT 0,
   createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   lastActiveAt TIMESTAMPTZ,
@@ -183,7 +193,9 @@ CREATE TABLE user_profiles (
 
 -- Indexes for performance
 CREATE INDEX idx_projects_user_id ON projects(user_id);
+CREATE INDEX idx_projects_parent_project_id ON projects(parent_project_id);
 CREATE INDEX idx_projects_status ON projects(status);
+CREATE INDEX idx_projects_archived ON projects(archived);
 CREATE INDEX idx_projects_user_lastActiveAt ON projects(user_id, lastActiveAt DESC);
 CREATE INDEX idx_instances_projectId ON instances(projectId);
 CREATE INDEX idx_instances_user_id ON instances(user_id);
@@ -313,6 +325,7 @@ The updated schema implements proper multi-user support through Supabase's built
 - Users can only access their own data through RLS policies
 
 **3. Implementation in Flutter:**
+
 ```dart
 // Get current user ID
 final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -337,25 +350,43 @@ final response = await _client
 
 ### Project Status Tracking
 
-Projects now support workflow status tracking with four predefined states:
+Projects support workflow status tracking with five predefined states, plus a separate archived flag:
 
 **1. Status Values:**
+
 - `active` (default): Currently being worked on
 - `completed`: Project finished successfully
 - `on_hold`: Temporarily paused
-- `archived`: No longer active but kept for records
+- `reset`: Project segment completed and archived; ready to start fresh with same name and new time accounting (useful for recurring time management tasks)
+- `canceled`: Project cancelled before completion
 
-**2. Status Field Definition:**
+**2. Archived Field:**
+
+- `archived` (boolean, default false): Separate field to preserve status when archiving
+- When archived, the original status is maintained for historical records
+- Allows queries like "show all completed projects including archived ones"
+
+**3. Parent Project Field:**
+
+- `parent_project_id` (nullable): Links to parent project for hierarchical tracking
+- Enables project/sub-project relationships
+- Useful with `reset` status to track successive iterations of recurring tasks
+
+**4. Status Field Definition:**
+
 ```sql
 status TEXT NOT NULL DEFAULT 'active' 
-  CHECK (status IN ('active', 'completed', 'on_hold', 'archived'))
+  CHECK (status IN ('active', 'completed', 'on_hold', 'reset', 'canceled'))
+archived BOOLEAN NOT NULL DEFAULT false
+parent_project_id BIGINT REFERENCES projects(id) ON DELETE SET NULL
 ```
 
-**3. Additional Fields:**
+**5. Additional Fields:**
+
 - `completedAt`: Timestamp when project was marked as completed
 - `description`: Optional text description of the project
 
-**4. Usage in Application:**
+**6. Usage in Application:**
 
 ```dart
 // Update project status
@@ -367,41 +398,96 @@ await _client
     })
     .eq('id', projectId);
 
+// Archive a project while preserving its status
+await _client
+    .from('projects')
+    .update({'archived': true})
+    .eq('id', projectId);
+
+// Reset a project: archive current and create new with same name
+final oldProject = await _client
+    .from('projects')
+    .select()
+    .eq('id', projectId)
+    .single();
+
+// Archive the old project with reset status
+await _client
+    .from('projects')
+    .update({
+      'status': 'reset',
+      'archived': true,
+    })
+    .eq('id', projectId);
+
+// Create new project linked to the old one
+final newProject = await _client
+    .from('projects')
+    .insert({
+      'user_id': userId,
+      'name': oldProject['name'],
+      'parent_project_id': projectId,
+      'status': 'active',
+      'description': oldProject['description'],
+    })
+    .select()
+    .single();
+
 // Filter projects by status
 final activeProjects = await _client
     .from('projects')
     .select()
     .eq('status', 'active')
+    .eq('archived', false)
     .order('lastActiveAt', ascending: false);
 
 // Get all non-archived projects
 final workingProjects = await _client
     .from('projects')
     .select()
-    .neq('status', 'archived')
+    .eq('archived', false)
     .order('status', ascending: true)
     .order('lastActiveAt', ascending: false);
+
+// Get project history (parent and all children)
+final projectHistory = await _client
+    .from('projects')
+    .select()
+    .or('id.eq.$projectId,parent_project_id.eq.$projectId')
+    .order('createdAt', ascending: true);
 ```
 
-**5. UI Integration Suggestions:**
+**7. UI Integration Suggestions:**
+
 - Display status badge/chip on each project card
 - Add status filter dropdown in project list
 - Show "Complete Project" action button
+- Show "Reset Project" action for recurring time management tasks
 - Automatically set `completedAt` when status changes to 'completed'
 - Prevent time tracking on archived projects
 - Warn before archiving projects with active instances
+- Display project hierarchy when parent_project_id is set
 
-**6. Status Transitions:**
-```
-active ──────────> completed ──────> archived
-  ├──────────────> on_hold ─────────> archived
-  └──────────────> archived
+**8. Status Transitions:**
+
+```text
+active ──────────> completed ──────> (can be archived)
+  ├──────────────> on_hold ─────────> (can be archived)
+  ├──────────────> reset ────────────> archived (automatic)
+  └──────────────> canceled ─────────> (can be archived)
+
+Note: reset status automatically archives the project and 
+      typically creates a new project with same name
 ```
 
-**Index Performance:**
-The schema includes an index on the status field for efficient filtering:
+**9. Index Performance:**
+
+The schema includes indexes on status and archived fields for efficient filtering:
+
 ```sql
 CREATE INDEX idx_projects_status ON projects(status);
+CREATE INDEX idx_projects_archived ON projects(archived);
+CREATE INDEX idx_projects_parent_project_id ON projects(parent_project_id);
 ```
 
 ### 2. Add Dart Package
@@ -443,8 +529,10 @@ class DatabaseService {
         .from('projects')
         .insert({
           'user_id': userId,
+          'parent_project_id': project.parentProjectId,
           'name': project.name,
           // 'status' field has DEFAULT 'active' in database
+          // 'archived' field has DEFAULT false in database
           'totalMinutes': project.totalMinutes,
           'createdAt': project.createdAt.toIso8601String(),
           'lastActiveAt': project.lastActiveAt?.toIso8601String(),
@@ -483,8 +571,10 @@ class DatabaseService {
     await _client
         .from('projects')
         .update({
+          'parent_project_id': project.parentProjectId,
           'name': project.name,
           'status': project.status,
+          'archived': project.archived,
           'totalMinutes': project.totalMinutes,
           'lastActiveAt': project.lastActiveAt?.toIso8601String(),
           'completedAt': project.completedAt?.toIso8601String(),
@@ -875,7 +965,8 @@ class MyApp extends StatelessWidget {
 
 ### 6. Environment Configuration
 
-**Option 1: Use environment variables (recommended for production)**
+#### Option 1: Use environment variables (recommended for production)
+
 ```dart
 // Store in .env file (add to .gitignore)
 SUPABASE_URL=https://your-project.supabase.co
@@ -888,7 +979,8 @@ await Supabase.initialize(
 );
 ```
 
-**Option 2: Configuration file (for development)**
+#### Option 2: Configuration file (for development)
+
 ```dart
 // lib/config/supabase_config.dart
 // WARNING: Add this file to .gitignore to avoid committing credentials
@@ -1003,6 +1095,7 @@ subscription.cancel();
 ## Troubleshooting
 
 ### Connection Issues
+
 ```dart
 // Check Supabase initialization
 try {
@@ -1017,11 +1110,13 @@ try {
 ```
 
 ### Authentication Issues
+
 - Verify authentication is enabled in Supabase dashboard
 - Check that email confirmation is configured correctly
 - Ensure RLS policies allow authenticated users
 
 ### Performance Issues
+
 - Use Supabase query filters to reduce data transfer
 - Implement pagination for large datasets
 - Use indexes on frequently queried columns (already created in setup)
