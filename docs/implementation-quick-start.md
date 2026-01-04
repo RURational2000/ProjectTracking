@@ -74,6 +74,7 @@ This repository contains the Supabase database configuration for the
 **3. Workflow for Schema Changes:**
 
 When making database schema changes:
+
 1. Create a new migration file in `ProjectTracking-Supabase-Config/migrations/`
 2. Test the migration in Supabase development environment
 3. Document changes in the migration file with comments
@@ -131,7 +132,8 @@ SUPABASE_ANON_KEY=your-prod-anon-key
 ### 1. Set Up Supabase Project
 
 **Create Project:**
-1. Go to https://supabase.com and create an account
+
+1. Go to <https://supabase.com> and create an account
 2. Create a new project
 3. Note your Project URL and anon/public API key
 4. Wait for project to finish provisioning (~2 minutes)
@@ -323,11 +325,13 @@ CREATE POLICY "Users can insert own profile" ON user_profiles
 The updated schema implements proper multi-user support through Supabase's built-in authentication system:
 
 **1. User Authentication:**
+
 - Each user authenticates through Supabase Auth (email/password, OAuth, etc.)
 - Upon successful authentication, users receive a unique UUID from `auth.uid()`
 - This UUID is automatically used in Row-Level Security (RLS) policies
 
 **2. Data Ownership:**
+
 - All projects and instances now include a `user_id` field referencing `auth.users(id)`
 - Foreign key constraints ensure data integrity with CASCADE delete
 - Users can only access their own data through RLS policies
@@ -351,6 +355,7 @@ final response = await _client
 ```
 
 **4. Benefits:**
+
 - **Privacy:** Users cannot access other users' projects or data
 - **Security:** Enforced at database level, not just application level
 - **Multi-tenancy:** Single database serves multiple users safely
@@ -681,7 +686,7 @@ class DatabaseService {
 
 ### 4. Initialize Supabase in main.dart
 
-**Note:** This is a basic initialization example. For production use with authentication, 
+**Note:** This is a basic initialization example. For production use with authentication,
 see the complete implementation in Section 5 below.
 
 ```dart
