@@ -7,37 +7,141 @@
 - [ ] Review and approve Supabase as database choice ✅
 - [ ] Create Supabase account (free tier available)
 - [ ] Set up development/test environment
+- [ ] Create separate GitHub repository for Supabase configuration (optional but recommended)
+
+## GitHub Project Management Setup
+
+### Overview
+
+Because the backend, Supabase, is closely coupled to the frontend for this project, Project Tracking, it makes more sense to maintain the Supabase-specific configurations, SQL migration scripts, and database documentation as subcomponent of the main respository.  This keeps database schema management closely coupled to the Flutter application code, simplifying testing and releases.  Because the project is relatively simple, the extra CI/CD overhead should not be especially significant.
+
+## Database Repository Structure
+
+Database migrations are stored within this repository to ensure schema and application code are versioned together.
+
+// Supabase respository structure as a subcomponent
+/
+├── lib/
+├── supabase/
+│   ├── migrations/                    # SQL migration scripts
+│   │   ├── 001_initial_schema.sql        # Initial table creation
+│   │   ├── 002_add_user_profiles.sql     # User profiles table
+│   │   └── 003_add_project_status.sql    # Project status field
+│   └── README.md                      # Setup and migration instructions
+│   ├── policies/                          # RLS policies
+│   │   ├── projects_policies.sql         # Project table policies
+│   │   ├── instances_policies.sql        # Instance table policies
+│   │   └── notes_policies.sql            # Notes table policies
+│   ├── functions/                         # Supabase Edge Functions
+│   │   └── README.md                      # Functions documentation
+│   ├── seeds/                             # Test data seeds
+│   │   └── dev_seed.sql                  # Development test data
+│   └── docs/                              # Additional documentation
+│       ├── schema.md                      # Database schema documentation
+│       ├── api-endpoints.md               # Auto-generated API docs
+│       └── security.md                    # Security and RLS guide
+
+### Quick Links
+
+- **Main Application:** [ProjectTracking](https://github.com/YOUR_USERNAME/ProjectTracking)
+- **Live Supabase Dashboard:** [Your Project Dashboard](https://app.supabase.com/project/your-project-ref)
+
+### Workflow for Schema Changes
+
+1. Create migration in supabase/migrations/.
+2. Update app code in lib/.
+3. Before merging, validate the final policy set by testing that a user cannot access another user's projects, instances, or notes via direct table queries and joins.
+4. Create a single PR with both schema and code changes.
+
+**Example Migration File Structure:**
+
+```sql
+-- Migration: 004_add_project_tags.sql
+-- Description: Add tags support for projects
+-- Date: 2025-12-31
+-- Author: [Your Name]
+-- Related PR: ProjectTracking#123
+
+-- Add tags column to projects table
+ALTER TABLE projects ADD COLUMN tags TEXT[] DEFAULT '{}';
+
+-- Create index for tag searching
+CREATE INDEX idx_projects_tags ON projects USING GIN(tags);
+
+-- Update RLS policies if needed
+-- (No policy changes required for this migration)
+
+-- Rollback instructions:
+-- ALTER TABLE projects DROP COLUMN tags;
+-- DROP INDEX idx_projects_tags;
+```
+
+**4. Synchronization Strategy:**
+
+- **Development:** Each developer has their own Supabase project for testing
+- **Staging:** Shared staging Supabase project for integration testing
+- **Production:** Production Supabase project with automated backups
+
+Maintain separate `.env` files for each environment (never commit to git):
+
+```env
+# .env.development
+SUPABASE_URL=https://your-dev-project.supabase.co
+SUPABASE_ANON_KEY=your-dev-anon-key
+
+# .env.staging
+SUPABASE_URL=https://your-staging-project.supabase.co
+SUPABASE_ANON_KEY=your-staging-anon-key
+
+# .env.production
+SUPABASE_URL=https://your-prod-project.supabase.co
+SUPABASE_ANON_KEY=your-prod-anon-key
+```
 
 ## Phase 1: Supabase Implementation (2-3 weeks)
 
 ### 1. Set Up Supabase Project
 
 **Create Project:**
-1. Go to https://supabase.com and create an account
+
+1. Go to <https://supabase.com> and create an account
 2. Create a new project
 3. Note your Project URL and anon/public API key
 4. Wait for project to finish provisioning (~2 minutes)
 
 **SQL Setup Script:**
+
 ```sql
--- Projects table
+-- Projects table with user ownership and status tracking
 CREATE TABLE projects (
   id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  parent_project_id BIGINT REFERENCES projects(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active' 
+    CHECK (status IN ('active', 'completed', 'on_hold', 'reset', 'canceled')),
+  archived BOOLEAN NOT NULL DEFAULT false,
   totalMinutes INTEGER NOT NULL DEFAULT 0,
   createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  lastActiveAt TIMESTAMPTZ
+  lastActiveAt TIMESTAMPTZ,
+  completedAt TIMESTAMPTZ,
+  description TEXT,
+  CONSTRAINT unique_user_project_name UNIQUE (user_id, name)
 );
 
--- Instances table
+-- Instances table with user ownership
 CREATE TABLE instances (
   id BIGSERIAL PRIMARY KEY,
   projectId BIGINT NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   startTime TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   endTime TIMESTAMPTZ,
   durationMinutes INTEGER NOT NULL DEFAULT 0,
   CONSTRAINT fk_instances_projects FOREIGN KEY (projectId) 
     REFERENCES projects (id) ON DELETE CASCADE
+  -- Note: A CHECK constraint verifying user_id matches the project owner
+  -- would impact INSERT/UPDATE performance due to subquery execution.
+  -- User ownership verification is handled by RLS policies and application logic.
 );
 
 -- Notes table
@@ -50,28 +154,334 @@ CREATE TABLE notes (
     REFERENCES instances (id) ON DELETE CASCADE
 );
 
--- Indexes
+-- User profiles table (optional, for extended user information)
+CREATE TABLE user_profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name TEXT,
+  avatar_url TEXT,
+  timezone TEXT DEFAULT 'UTC',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX idx_projects_user_id ON projects(user_id);
+CREATE INDEX idx_projects_parent_project_id ON projects(parent_project_id);
+CREATE INDEX idx_projects_status ON projects(status);
+CREATE INDEX idx_projects_archived ON projects(archived);
+CREATE INDEX idx_projects_user_lastActiveAt ON projects(user_id, lastActiveAt DESC);
 CREATE INDEX idx_instances_projectId ON instances(projectId);
+CREATE INDEX idx_instances_user_id ON instances(user_id);
+CREATE INDEX idx_instances_startTime ON instances(startTime DESC);
 CREATE INDEX idx_notes_instanceId ON notes(instanceId);
-CREATE INDEX idx_projects_lastActiveAt ON projects(lastActiveAt DESC);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE instances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
--- Create policies (adjust based on your auth requirements)
--- IMPORTANT: These policies allow all authenticated users to access all data.
--- For multi-user scenarios, implement user-specific policies based on your needs.
--- Example for user-specific access: USING (auth.uid() = user_id)
-CREATE POLICY "Allow all for authenticated users" ON projects
-  FOR ALL USING (auth.role() = 'authenticated');
+-- RLS Policies for user-specific data access
+-- Projects: Users can only access their own projects
+CREATE POLICY "Users can view own projects" ON projects
+  FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Allow all for authenticated users" ON instances
-  FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Users can insert own projects" ON projects
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Allow all for authenticated users" ON notes
-  FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Users can update own projects" ON projects
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own projects" ON projects
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Instances: Users can only access instances of their own projects
+-- Note: This policy verifies ownership through the projects table AND the instance's user_id
+CREATE POLICY "Users can view own instances" ON instances
+  FOR SELECT USING (
+    auth.uid() = user_id AND
+    EXISTS (
+      SELECT 1 FROM projects 
+      WHERE projects.id = instances.projectId 
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can insert own instances" ON instances
+  FOR INSERT WITH CHECK (
+    auth.uid() = user_id AND
+    EXISTS (
+      SELECT 1 FROM projects 
+      WHERE projects.id = instances.projectId 
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update own instances" ON instances
+  FOR UPDATE USING (
+    auth.uid() = user_id AND
+    EXISTS (
+      SELECT 1 FROM projects 
+      WHERE projects.id = instances.projectId 
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete own instances" ON instances
+  FOR DELETE USING (
+    auth.uid() = user_id AND
+    EXISTS (
+      SELECT 1 FROM projects 
+      WHERE projects.id = instances.projectId 
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+-- Notes: Users can only access notes on instances belonging to their projects
+CREATE POLICY "Users can view notes on own instances" ON notes
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM instances
+      JOIN projects ON instances.projectId = projects.id
+      WHERE instances.id = notes.instanceId 
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can insert notes on own instances" ON notes
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM instances
+      JOIN projects ON instances.projectId = projects.id
+      WHERE instances.id = notes.instanceId 
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update notes on own instances" ON notes
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM instances
+      JOIN projects ON instances.projectId = projects.id
+      WHERE instances.id = notes.instanceId 
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete notes on own instances" ON notes
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM instances
+      JOIN projects ON instances.projectId = projects.id
+      WHERE instances.id = notes.instanceId 
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+-- User profiles: Users can only access their own profile
+CREATE POLICY "Users can view own profile" ON user_profiles
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" ON user_profiles
+  FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile" ON user_profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
+```
+
+## Understanding Key Features
+
+### Individual User Identification
+
+The updated schema implements proper multi-user support through Supabase's built-in authentication system:
+
+**1. User Authentication:**
+
+- Each user authenticates through Supabase Auth (email/password, OAuth, etc.)
+- Upon successful authentication, users receive a unique UUID from `auth.uid()`
+- This UUID is automatically used in Row-Level Security (RLS) policies
+
+**2. Data Ownership:**
+
+- All projects and instances now include a `user_id` field referencing `auth.users(id)`
+- Foreign key constraints ensure data integrity with CASCADE delete
+- Users can only access their own data through RLS policies
+
+**3. Implementation in Flutter:**
+
+```dart
+// Get current user ID
+final userId = Supabase.instance.client.auth.currentUser?.id;
+
+// When inserting a project, user_id is automatically included
+final response = await _client
+    .from('projects')
+    .insert({
+      'user_id': userId,  // Required for RLS
+      'name': project.name,
+      'status': 'active',
+      'totalMinutes': project.totalMinutes,
+      // ...
+    });
+```
+
+**4. Benefits:**
+
+- **Privacy:** Users cannot access other users' projects or data
+- **Security:** Enforced at database level, not just application level
+- **Multi-tenancy:** Single database serves multiple users safely
+- **Scalability:** Easy to add team/organization features later
+
+### Project Status Tracking
+
+Projects support workflow status tracking with five predefined states, plus a separate archived flag:
+
+**1. Status Values:**
+
+- `active` (default): Currently being worked on
+- `completed`: Project finished successfully
+- `on_hold`: Temporarily paused
+- `reset`: Project segment completed and archived; ready to start fresh with same name and new time accounting (useful for recurring time management tasks)
+- `canceled`: Project cancelled before completion
+
+**2. Archived Field:**
+
+- `archived` (boolean, default false): Separate field to preserve status when archiving
+- When archived, the original status is maintained for historical records
+- Allows queries like "show all completed projects including archived ones"
+
+**3. Parent Project Field:**
+
+- `parent_project_id` (nullable): Links to parent project for hierarchical tracking
+- Enables project/sub-project relationships
+- Useful with `reset` status to track successive iterations of recurring tasks
+
+**4. Status Field Definition:**
+
+```sql
+status TEXT NOT NULL DEFAULT 'active' 
+  CHECK (status IN ('active', 'completed', 'on_hold', 'reset', 'canceled'))
+archived BOOLEAN NOT NULL DEFAULT false
+parent_project_id BIGINT REFERENCES projects(id) ON DELETE SET NULL
+```
+
+**5. Additional Fields:**
+
+- `completedAt`: Timestamp when project was marked as completed
+- `description`: Optional text description of the project
+
+**6. Usage in Application:**
+
+```dart
+// Update project status
+await _client
+    -- In a SQL migration file, create a database function
+    CREATE OR REPLACE FUNCTION reset_project(project_id_to_reset BIGINT)
+    RETURNS projects AS $$
+    DECLARE
+      old_project_record projects;
+      new_project_record projects;
+    BEGIN
+      -- 1. Fetch and lock the old project, then update it
+      UPDATE projects
+      SET status = 'reset', archived = true
+      WHERE id = project_id_to_reset AND user_id = auth.uid()
+      RETURNING * INTO old_project_record;
+
+      IF old_project_record IS NULL THEN
+        RAISE EXCEPTION 'Project not found or you do not have permission to reset it.';
+      END IF;
+
+      -- 2. Create the new project linked to the old one
+      INSERT INTO projects (user_id, name, parent_project_id, status, description)
+      VALUES (
+        auth.uid(),
+        old_project_record.name,
+        old_project_record.id,
+        'active',
+        old_project_record.description
+      )
+      RETURNING * INTO new_project_record;
+
+      -- 3. Return the newly created project
+      RETURN new_project_record;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    // In your Dart code, call the function via RPC
+    final newProject = await _client
+        .rpc('reset_project', params: {'project_id_to_reset': projectId})
+        .select()
+    .eq('id', projectId);
+
+// Create new project linked to the old one
+final newProject = await _client
+    .from('projects')
+    .insert({
+      'user_id': userId,
+      'name': oldProject['name'],
+      'parent_project_id': projectId,
+      'status': 'active',
+      'description': oldProject['description'],
+    })
+    .select()
+    .single();
+
+// Filter projects by status
+final activeProjects = await _client
+    .from('projects')
+    .select()
+    .eq('status', 'active')
+    .eq('archived', false)
+    .order('lastActiveAt', ascending: false);
+
+// Get all non-archived projects
+final workingProjects = await _client
+    .from('projects')
+    .select()
+    .eq('archived', false)
+    .order('status', ascending: true)
+    .order('lastActiveAt', ascending: false);
+
+// Get project history (parent and all children)
+final projectHistory = await _client
+    .from('projects')
+    .select()
+    .or('id.eq.$projectId,parent_project_id.eq.$projectId')
+    .order('createdAt', ascending: true);
+```
+
+**7. UI Integration Suggestions:**
+
+- Display status badge/chip on each project card
+- Add status filter dropdown in project list
+- Show "Complete Project" action button
+- Show "Reset Project" action for recurring time management tasks
+- Automatically set `completedAt` when status changes to 'completed'
+- Prevent time tracking on archived projects
+- Warn before archiving projects with active instances
+- Display project hierarchy when parent_project_id is set
+
+**8. Status Transitions:**
+
+```text
+active ──────────> completed ──────> (can be archived)
+  ├──────────────> on_hold ─────────> (can be archived)
+  ├──────────────> reset ────────────> archived (automatic)
+  └──────────────> canceled ─────────> (can be archived)
+
+Note: reset status automatically archives the project and 
+      typically creates a new project with same name
+```
+
+**9. Index Performance:**
+
+The schema includes indexes on status and archived fields for efficient filtering:
+
+```sql
+CREATE INDEX idx_projects_status ON projects(status);
+CREATE INDEX idx_projects_archived ON projects(archived);
+CREATE INDEX idx_projects_parent_project_id ON projects(parent_project_id);
 ```
 
 ### 2. Add Dart Package
@@ -94,26 +504,33 @@ import 'package:project_tracking/models/note.dart';
 
 /// Core database service using Supabase for centralized persistence.
 /// Manages Projects, Instances (work sessions), and Notes with time accumulation.
+/// Supports multi-user authentication and project status tracking.
 class DatabaseService {
   final SupabaseClient _client = Supabase.instance.client;
-  Future<void> initialize() async {
-    _connection ??= MssqlConnection.getInstance();
   
-    if (_connection!.isConnected) {
-      return;
-    }
-
-    bool isConnected = await _connection!.connect(
+  Future<void> initialize() async {
+    // Supabase client is initialized in main.dart
+    // No additional initialization needed
   }
   
   Future<int> insertProject(Project project) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw Exception('User not authenticated. Please sign in to create projects.');
+    }
+    
     final response = await _client
         .from('projects')
         .insert({
+          'user_id': userId,
+          'parent_project_id': project.parentProjectId,
           'name': project.name,
+          // 'status' field has DEFAULT 'active' in database
+          // 'archived' field has DEFAULT false in database
           'totalMinutes': project.totalMinutes,
           'createdAt': project.createdAt.toIso8601String(),
           'lastActiveAt': project.lastActiveAt?.toIso8601String(),
+          'description': project.description,
         })
         .select('id')
         .single();
@@ -148,9 +565,14 @@ class DatabaseService {
     await _client
         .from('projects')
         .update({
+          'parent_project_id': project.parentProjectId,
           'name': project.name,
+          'status': project.status,
+          'archived': project.archived,
           'totalMinutes': project.totalMinutes,
           'lastActiveAt': project.lastActiveAt?.toIso8601String(),
+          'completedAt': project.completedAt?.toIso8601String(),
+          'description': project.description,
         })
         .eq('id', project.id!);
   }
@@ -169,10 +591,16 @@ class DatabaseService {
   }
   
   Future<int> insertInstance(Instance instance) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw Exception('User not authenticated. Please sign in to track time.');
+    }
+    
     final response = await _client
         .from('instances')
         .insert({
           'projectId': instance.projectId,
+          'user_id': userId,
           'startTime': instance.startTime.toIso8601String(),
           'endTime': instance.endTime?.toIso8601String(),
           'durationMinutes': instance.durationMinutes,
@@ -239,8 +667,11 @@ class DatabaseService {
 
 ### 4. Initialize Supabase in main.dart
 
+**Note:** This is a basic initialization example. For production use with authentication,
+see the complete implementation in Section 5 below.
+
 ```dart
-// lib/main.dart
+// lib/main.dart (basic version without authentication)
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
@@ -252,12 +683,22 @@ import 'package:project_tracking/screens/home_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Supabase
-  // IMPORTANT: Replace with your actual Supabase project credentials
-  // DO NOT commit real credentials to version control
+  // Initialize Supabase with environment variables
+  // Validate that environment variables are set
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  
+  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    throw Exception(
+      'Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY. '
+      'Please configure these variables before running the application. '
+      'See environment configuration section for details.'
+    );
+  }
+  
   await Supabase.initialize(
-    url: 'YOUR_SUPABASE_URL',
-    anonKey: 'YOUR_SUPABASE_ANON_KEY',
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   );
   
   // Initialize services
@@ -300,9 +741,226 @@ class MyApp extends StatelessWidget {
 }
 ```
 
-### 5. Environment Configuration
+### 5. Implement Authentication
 
-**Option 1: Use environment variables (recommended for production)**
+Add authentication screens and logic to handle user sign-in/sign-up:
+
+```dart
+// lib/screens/auth_screen.dart
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:project_tracking/screens/home_screen.dart';
+
+class AuthScreen extends StatefulWidget {
+  const AuthScreen({super.key});
+
+  @override
+  State<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends State<AuthScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  bool _isSignUp = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleAuth() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final supabase = Supabase.instance.client;
+      
+      if (_isSignUp) {
+        // Sign up
+        final response = await supabase.auth.signUp(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        
+        if (response.user != null) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created! Please check your email to verify.'),
+            ),
+          );
+        }
+      } else {
+        // Sign in
+        final response = await supabase.auth.signInWithPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        
+        if (response.user != null) {
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+        }
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_isSignUp ? 'Sign Up' : 'Sign In'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+            const SizedBox(height: 24),
+            if (_isLoading)
+              const CircularProgressIndicator()
+            else
+              ElevatedButton(
+                onPressed: _handleAuth,
+                child: Text(_isSignUp ? 'Sign Up' : 'Sign In'),
+              ),
+            TextButton(
+              onPressed: () => setState(() => _isSignUp = !_isSignUp),
+              child: Text(
+                _isSignUp 
+                  ? 'Already have an account? Sign In' 
+                  : 'Need an account? Sign Up',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+**Update main.dart to handle authentication state:**
+
+```dart
+// lib/main.dart
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:project_tracking/services/database_service.dart';
+import 'package:project_tracking/services/file_logging_service.dart';
+import 'package:project_tracking/providers/tracking_provider.dart';
+import 'package:project_tracking/screens/home_screen.dart';
+import 'package:project_tracking/screens/auth_screen.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Supabase with environment variables
+  // Validate that environment variables are set
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  
+  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    throw Exception(
+      'Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY. '
+      'Please configure these variables before running the application. '
+      'See environment configuration section for details.'
+    );
+  }
+  
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
+  
+  // Initialize services
+  final dbService = DatabaseService();
+  await dbService.initialize();
+  
+  final fileService = FileLoggingService();
+  await fileService.initialize();
+  
+  runApp(MyApp(dbService: dbService, fileService: fileService));
+}
+
+class MyApp extends StatelessWidget {
+  final DatabaseService dbService;
+  final FileLoggingService fileService;
+  
+  const MyApp({
+    super.key,
+    required this.dbService,
+    required this.fileService,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => TrackingProvider(
+        dbService: dbService,
+        fileService: fileService,
+      ),
+      child: MaterialApp(
+        title: 'Project Tracking',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          useMaterial3: true,
+        ),
+        home: StreamBuilder<AuthState>(
+          stream: Supabase.instance.client.auth.onAuthStateChange,
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data!.session != null) {
+              return const HomeScreen();
+            }
+            return const AuthScreen();
+          },
+        ),
+      ),
+    );
+  }
+}
+```
+
+### 6. Environment Configuration
+
+#### Option 1: Use environment variables (recommended for production)
+
 ```dart
 // Store in .env file (add to .gitignore)
 SUPABASE_URL=https://your-project.supabase.co
@@ -315,7 +973,8 @@ await Supabase.initialize(
 );
 ```
 
-**Option 2: Configuration file (for development)**
+#### Option 2: Configuration file (for development)
+
 ```dart
 // lib/config/supabase_config.dart
 // WARNING: Add this file to .gitignore to avoid committing credentials
@@ -430,6 +1089,7 @@ subscription.cancel();
 ## Troubleshooting
 
 ### Connection Issues
+
 ```dart
 // Check Supabase initialization
 try {
@@ -444,11 +1104,13 @@ try {
 ```
 
 ### Authentication Issues
+
 - Verify authentication is enabled in Supabase dashboard
 - Check that email confirmation is configured correctly
 - Ensure RLS policies allow authenticated users
 
 ### Performance Issues
+
 - Use Supabase query filters to reduce data transfer
 - Implement pagination for large datasets
 - Use indexes on frequently queried columns (already created in setup)
