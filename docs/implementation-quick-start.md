@@ -236,45 +236,45 @@ CREATE POLICY "Users can delete own instances" ON instances
       AND projects.user_id = auth.uid()
     )
   );
-          EXISTS (
-            SELECT 1 FROM instances
-            JOIN projects ON instances.projectId = projects.id
-            WHERE instances.id = notes.instanceId 
-            AND projects.user_id = auth.uid()
-          )
-        );
 
-      CREATE POLICY "Users can insert notes on own instances" ON notes
-        FOR INSERT WITH CHECK (
-          EXISTS (
-            SELECT 1 FROM instances
-            JOIN projects ON instances.projectId = projects.id
-            WHERE instances.id = notes.instanceId 
-            AND projects.user_id = auth.uid()
-          )
-        );
-
-      CREATE POLICY "Users can update notes on own instances" ON notes
-        FOR UPDATE USING (
-          EXISTS (
-            SELECT 1 FROM instances
-            JOIN projects ON instances.projectId = projects.id
-            WHERE instances.id = notes.instanceId 
-            AND projects.user_id = auth.uid()
-          )
-        );
-
-      CREATE POLICY "Users can delete notes on own instances" ON notes
-        FOR DELETE USING (
-          EXISTS (
-            SELECT 1 FROM instances
-            JOIN projects ON instances.projectId = projects.id
-            WHERE instances.id = notes.instanceId 
-            AND projects.user_id = auth.uid()
-          )
-      SELECT 1 FROM instances 
+-- Notes: Users can only access notes on instances belonging to their projects
+CREATE POLICY "Users can view notes on own instances" ON notes
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM instances
+      JOIN projects ON instances.projectId = projects.id
       WHERE instances.id = notes.instanceId 
-      AND instances.user_id = auth.uid()
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can insert notes on own instances" ON notes
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM instances
+      JOIN projects ON instances.projectId = projects.id
+      WHERE instances.id = notes.instanceId 
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update notes on own instances" ON notes
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM instances
+      JOIN projects ON instances.projectId = projects.id
+      WHERE instances.id = notes.instanceId 
+      AND projects.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete notes on own instances" ON notes
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM instances
+      JOIN projects ON instances.projectId = projects.id
+      WHERE instances.id = notes.instanceId 
+      AND projects.user_id = auth.uid()
     )
   );
 
