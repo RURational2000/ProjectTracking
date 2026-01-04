@@ -48,10 +48,10 @@ Database migrations are stored within this repository to ensure schema and appli
 
 ### Workflow for Schema Changes
 
-// Workflow:
-// 1. Create migration in supabase/migrations/.
-// 2. Update app code in lib/.
-// 3. Create a single PR with both schema and code changes.
+1. Create migration in supabase/migrations/.
+2. Update app code in lib/.
+3. Before merging, validate the final policy set by testing that a user cannot access another user's projects, instances, or notes via direct table queries and joins.
+4. Create a single PR with both schema and code changes.
 
 **Example Migration File Structure:**
 
