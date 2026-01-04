@@ -13,74 +13,45 @@
 
 ### Overview
 
-It is recommended to maintain a separate GitHub repository for Supabase-specific configurations, SQL migration scripts, and database documentation. This keeps database schema management separate from the Flutter application code while allowing version control and collaboration.
+Because the backend, Supabase, is closely coupled to the frontend for this project, Project Tracking, it makes more sense to maintain the Supabase-specific configurations, SQL migration scripts, and database documentation as subcomponent of the main respository.  This keeps database schema management closely coupled to the Flutter application code, simplifying testing and releases.  Because the project is relatively simple, the extra CI/CD overhead should not be especially significant.
 
-### Creating a Supabase Configuration Repository
+## Database Repository Structure
 
-**1. Create New GitHub Repository:**
+Database migrations are stored within this repository to ensure schema and application code are versioned together.
 
-```bash
-# Recommended repository name
-ProjectTracking-Supabase-Config
-
-# Repository structure
+// Supabase respository structure as a subcomponent
 /
-├── README.md                          # Setup instructions and overview
-├── migrations/                        # SQL migration scripts
-│   ├── 001_initial_schema.sql        # Initial table creation
-│   ├── 002_add_user_profiles.sql     # User profiles table
-│   ├── 003_add_project_status.sql    # Project status field
-│   └── README.md                      # Migration instructions
-├── policies/                          # RLS policies
-│   ├── projects_policies.sql         # Project table policies
-│   ├── instances_policies.sql        # Instance table policies
-│   └── notes_policies.sql            # Notes table policies
-├── functions/                         # Supabase Edge Functions
-│   └── README.md                      # Functions documentation
-├── seeds/                             # Test data seeds
-│   └── dev_seed.sql                  # Development test data
-└── docs/                              # Additional documentation
-    ├── schema.md                      # Database schema documentation
-    ├── api-endpoints.md               # Auto-generated API docs
-    └── security.md                    # Security and RLS guide
-```
-
-**2. Link Repositories:**
-
-In your main `ProjectTracking` repository's README.md, add a reference:
-
-```markdown
-## Database Configuration
-
-This application uses Supabase as its backend. Database schema, migrations, and 
-configuration are maintained in a separate repository:
-
-**Supabase Config Repository:** [ProjectTracking-Supabase-Config](https://github.com/YOUR_USERNAME/ProjectTracking-Supabase-Config)
-```
-
-In your `ProjectTracking-Supabase-Config` repository's README.md:
-
-```markdown
-## ProjectTracking Supabase Configuration
-
-This repository contains the Supabase database configuration for the 
-[ProjectTracking](https://github.com/YOUR_USERNAME/ProjectTracking) Flutter application.
+├── lib/
+├── supabase/
+│   ├── migrations/                    # SQL migration scripts
+│   │   ├── 001_initial_schema.sql        # Initial table creation
+│   │   ├── 002_add_user_profiles.sql     # User profiles table
+│   │   └── 003_add_project_status.sql    # Project status field
+│   └── README.md                      # Setup and migration instructions
+│   ├── policies/                          # RLS policies
+│   │   ├── projects_policies.sql         # Project table policies
+│   │   ├── instances_policies.sql        # Instance table policies
+│   │   └── notes_policies.sql            # Notes table policies
+│   ├── functions/                         # Supabase Edge Functions
+│   │   └── README.md                      # Functions documentation
+│   ├── seeds/                             # Test data seeds
+│   │   └── dev_seed.sql                  # Development test data
+│   └── docs/                              # Additional documentation
+│       ├── schema.md                      # Database schema documentation
+│       ├── api-endpoints.md               # Auto-generated API docs
+│       └── security.md                    # Security and RLS guide
 
 ### Quick Links
+
 - **Main Application:** [ProjectTracking](https://github.com/YOUR_USERNAME/ProjectTracking)
 - **Live Supabase Dashboard:** [Your Project Dashboard](https://app.supabase.com/project/your-project-ref)
-```
 
-**3. Workflow for Schema Changes:**
+### Workflow for Schema Changes
 
-When making database schema changes:
-
-1. Create a new migration file in `ProjectTracking-Supabase-Config/migrations/`
-2. Test the migration in Supabase development environment
-3. Document changes in the migration file with comments
-4. Commit and push to the Supabase config repository
-5. Update the Flutter app's data models if needed in the main repository
-6. Create pull requests in both repositories, linking them together
+// Workflow:
+// 1. Create migration in supabase/migrations/.
+// 2. Update app code in lib/.
+// 3. Create a single PR with both schema and code changes.
 
 **Example Migration File Structure:**
 
