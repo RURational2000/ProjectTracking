@@ -404,33 +404,43 @@ parent_project_id BIGINT REFERENCES projects(id) ON DELETE SET NULL
 ```dart
 // Update project status
 await _client
-    .from('projects')
-    .update({
-      'status': 'completed',
-      'completedAt': DateTime.now().toIso8601String(),
-    })
-    .eq('id', projectId);
+    -- In a SQL migration file, create a database function
+    CREATE OR REPLACE FUNCTION reset_project(project_id_to_reset BIGINT)
+    RETURNS projects AS $$
+    DECLARE
+      old_project_record projects;
+      new_project_record projects;
+    BEGIN
+      -- 1. Fetch and lock the old project, then update it
+      UPDATE projects
+      SET status = 'reset', archived = true
+      WHERE id = project_id_to_reset AND user_id = auth.uid()
+      RETURNING * INTO old_project_record;
 
-// Archive a project while preserving its status
-await _client
-    .from('projects')
-    .update({'archived': true})
-    .eq('id', projectId);
+      IF old_project_record IS NULL THEN
+        RAISE EXCEPTION 'Project not found or you do not have permission to reset it.';
+      END IF;
 
-// Reset a project: archive current and create new with same name
-final oldProject = await _client
-    .from('projects')
-    .select()
-    .eq('id', projectId)
-    .single();
+      -- 2. Create the new project linked to the old one
+      INSERT INTO projects (user_id, name, parent_project_id, status, description)
+      VALUES (
+        auth.uid(),
+        old_project_record.name,
+        old_project_record.id,
+        'active',
+        old_project_record.description
+      )
+      RETURNING * INTO new_project_record;
 
-// Archive the old project with reset status
-await _client
-    .from('projects')
-    .update({
-      'status': 'reset',
-      'archived': true,
-    })
+      -- 3. Return the newly created project
+      RETURN new_project_record;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    // In your Dart code, call the function via RPC
+    final newProject = await _client
+        .rpc('reset_project', params: {'project_id_to_reset': projectId})
+        .select()
     .eq('id', projectId);
 
 // Create new project linked to the old one
