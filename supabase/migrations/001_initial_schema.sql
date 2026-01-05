@@ -118,6 +118,14 @@ CREATE POLICY "Users can update own instances" ON instances
       WHERE projects.id = instances.projectId
       AND projects.user_id = auth.uid()
     )
+  )
+  WITH CHECK (
+    auth.uid() = user_id AND
+    EXISTS (
+      SELECT 1 FROM projects
+      WHERE projects.id = instances.projectId
+      AND projects.user_id = auth.uid()
+    )
   );
 
 CREATE POLICY "Users can delete own instances" ON instances
