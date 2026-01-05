@@ -4,10 +4,10 @@
 
 ## Pre-Implementation Checklist
 
-- [ ] Review and approve Supabase as database choice ✅
-- [ ] Create Supabase account (free tier available)
-- [ ] Set up development/test environment
-- [ ] Create separate GitHub repository for Supabase configuration (optional but recommended)
+- [x] Review and approve Supabase as database choice ✅
+- [x] Create Supabase account (free tier available)
+- [x] Set up development/test environment
+- [x] Set up supabase subcomponent in main repository for Supabase configuration
 
 ## GitHub Project Management Setup
 
@@ -43,8 +43,8 @@ Database migrations are stored within this repository to ensure schema and appli
 
 ### Quick Links
 
-- **Main Application:** [ProjectTracking](https://github.com/YOUR_USERNAME/ProjectTracking)
-- **Live Supabase Dashboard:** [Your Project Dashboard](https://app.supabase.com/project/your-project-ref)
+- **Main Application:** [ProjectTracking](https://github.com/RURational2000/ProjectTracking)
+- **Live Supabase Dashboard:** [Your Project Dashboard](https://supabase.com/dashboard/project/gmgrxefjibuwoppnosdl)
 
 ### Workflow for Schema Changes
 
@@ -108,6 +108,7 @@ SUPABASE_ANON_KEY=your-prod-anon-key
 2. Create a new project
 3. Note your Project URL and anon/public API key
 4. Wait for project to finish provisioning (~2 minutes)
+5. With 001_initial_schema.sql (derived from SQL Setup Script below), use Supabase SQL Editor to create initial project.
 
 **SQL Setup Script:**
 
@@ -482,6 +483,112 @@ The schema includes indexes on status and archived fields for efficient filterin
 CREATE INDEX idx_projects_status ON projects(status);
 CREATE INDEX idx_projects_archived ON projects(archived);
 CREATE INDEX idx_projects_parent_project_id ON projects(parent_project_id);
+```
+
+## Phase 1: Project Tracking Implementation
+
+### 1. Apply Migration to Supabase
+
+After creating the `001_initial_schema.sql` file, you need to apply it to your Supabase project. There are two methods:
+
+#### Method 1: Supabase Dashboard (Quick & Easy)
+
+1. Log into your [Supabase Dashboard](https://app.supabase.com)
+2. Select your project
+3. Navigate to **SQL Editor** in the left sidebar
+4. Click **New Query**
+5. Copy the entire contents of `supabase/migrations/001_initial_schema.sql`
+6. Paste into the SQL editor
+7. Click **Run** or press `Ctrl+Enter`
+8. Verify success - you should see "Success. No rows returned" message
+9. Navigate to **Table Editor** to confirm tables were created
+
+**Verification Steps:**
+
+- Check that `projects`, `instances`, `notes`, and `user_profiles` tables appear in Table Editor
+- Verify RLS is enabled (shield icon appears next to table names)
+- Click on any table → Policies to confirm RLS policies were created
+
+#### Method 2: Supabase CLI (Recommended for Version Control)
+
+The CLI approach is better for team development and automated deployments.
+
+**Initial Setup (one-time):**
+
+```bash
+# Install Supabase CLI globally
+npm install -g supabase
+
+# Verify installation
+supabase --version
+
+# Login to Supabase (opens browser for authentication)
+supabase login
+
+# Navigate to your project directory
+cd c:/develop/projects/ProjectTracking
+
+# Link to your remote Supabase project
+supabase link --project-ref your-project-ref
+```
+
+**Finding Your Project Reference:**
+
+- Go to [Supabase Dashboard](https://app.supabase.com)
+- Select your project
+- Go to **Settings** → **General**
+- Copy the **Reference ID** (appears under Project name)
+
+**Apply the Migration:**
+
+```bash
+# Push local migrations to remote database
+supabase db push
+
+# Alternative: Reset database and apply all migrations from scratch
+supabase db reset
+```
+
+**Verify Migration Applied:**
+
+```bash
+# Check migration status
+supabase migration list
+
+# You should see:
+#   001_initial_schema.sql ... applied
+```
+
+#### Troubleshooting CLI Issues
+
+**Common Issues:**
+
+1. **"permission denied" errors**:
+   - Make sure you're authenticated with `supabase login`
+   - Verify project ownership in Supabase Dashboard
+
+2. **"relation already exists" errors**:
+   - Tables already exist from previous runs
+   - Either drop tables manually or use `supabase db reset` to start fresh
+
+3. **RLS policy errors**:
+   - Ensure `auth.users` table exists (it's created automatically by Supabase)
+   - If testing locally, make sure Supabase local dev environment is running
+
+4. **Migration not found (CLI)**:
+   - Verify you're in the project root directory
+   - Confirm `supabase/migrations/001_initial_schema.sql` exists
+   - Check file permissions
+
+**Post-Migration Verification:**
+
+Test RLS policies are working:
+
+```sql
+-- In SQL Editor, run as an authenticated user:
+SELECT * FROM projects;  -- Should return empty or only your projects
+SELECT * FROM instances; -- Should return empty or only your instances
+SELECT * FROM notes;     -- Should return empty or only your notes
 ```
 
 ### 2. Add Dart Package
