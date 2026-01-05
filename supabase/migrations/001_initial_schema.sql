@@ -57,6 +57,21 @@ CREATE TABLE user_profiles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Function to update the updated_at timestamp
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to automatically update updated_at on user_profiles update
+CREATE TRIGGER on_user_profiles_updated
+  BEFORE UPDATE ON public.user_profiles
+  FOR EACH ROW
+  EXECUTE PROCEDURE public.handle_updated_at();
+
 -- Indexes for performance
 CREATE INDEX idx_projects_user_id ON projects(user_id);
 CREATE INDEX idx_projects_parent_project_id ON projects(parent_project_id);
