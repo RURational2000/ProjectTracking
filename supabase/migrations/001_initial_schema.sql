@@ -83,7 +83,8 @@ CREATE POLICY "Users can insert own projects" ON projects
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can update own projects" ON projects
-  FOR UPDATE USING (auth.uid() = user_id);
+  FOR UPDATE USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete own projects" ON projects
   FOR DELETE USING (auth.uid() = user_id);
