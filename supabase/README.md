@@ -5,11 +5,11 @@ This document provides a quick reference and implementation guide for using Supa
 ## Database Schema
 
 The database schema is defined in the `migrations` folder. The initial schema includes tables for projects, tasks, users, and comments, with appropriate relationships and constraints.
-Refer to `migrations/001_initial_schema.sql` and <https://supabase.com/dashboard/project/qhbobncyqkpsdfziycbp/database/schemas> for complete SQL definitions.
+Refer to `migrations/001_initial_schema.sql` for complete SQL definitions.
 
 ## Supabase Dashboard
 
-You can manage the database through Supabase dashboard <https://supabase.com/dashboard/project/qhbobncyqkpsdfziycbp>.
+You can manage the database through Supabase dashboard <https://supabase.com/dashboard/project/YOUR_PROJECT_REF/>
 
 ## API Endpoints
 

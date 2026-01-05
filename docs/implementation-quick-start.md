@@ -43,8 +43,8 @@ Database migrations are stored within this repository to ensure schema and appli
 
 ### Quick Links
 
-- **Main Application:** [ProjectTracking](https://github.com/RURational2000/ProjectTracking)
-- **Live Supabase Dashboard:** [Your Project Dashboard](https://supabase.com/dashboard/project/gmgrxefjibuwoppnosdl)
+- **Main Application:** [ProjectTracking](https://github.com/YOUR_USERNAME/ProjectTracking)
+- **Live Supabase Dashboard:** [Your Project Dashboard](https://supabase.com/dashboard/project/YOUR_PROJECT_REF)
 
 ### Workflow for Schema Changes
 
@@ -86,16 +86,16 @@ Maintain separate `.env` files for each environment (never commit to git):
 
 ```env
 # .env.development
-SUPABASE_URL=https://your-dev-project.supabase.co
-SUPABASE_ANON_KEY=your-dev-anon-key
+SUPABASE_URL=https://YOUR_DEV_PROJECT_REF.supabase.co
+SUPABASE_ANON_KEY=YOUR_DEV_ANON_KEY
 
 # .env.staging
-SUPABASE_URL=https://your-staging-project.supabase.co
-SUPABASE_ANON_KEY=your-staging-anon-key
+SUPABASE_URL=https://YOUR_STAGING_PROJECT_REF.supabase.co
+SUPABASE_ANON_KEY=YOUR_STAGING_ANON_KEY
 
 # .env.production
-SUPABASE_URL=https://your-prod-project.supabase.co
-SUPABASE_ANON_KEY=your-prod-anon-key
+SUPABASE_URL=https://YOUR_PROD_PROJECT_REF.supabase.co
+SUPABASE_ANON_KEY=YOUR_PROD_ANON_KEY
 ```
 
 ## Phase 1: Supabase Implementation (2-3 weeks)
@@ -1070,8 +1070,8 @@ class MyApp extends StatelessWidget {
 
 ```dart
 // Store in .env file (add to .gitignore)
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_ANON_KEY=YOUR_ANON_KEY
 
 // Load in code
 await Supabase.initialize(
@@ -1145,8 +1145,8 @@ void main() {
 
 ```dart
 // Set environment variables or use secure configuration
-// SUPABASE_URL=https://your-project.supabase.co
-// SUPABASE_ANON_KEY=your-anon-key
+// SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+// SUPABASE_ANON_KEY=YOUR_ANON_KEY
 ```
 
 ### 2. Deploy New Version
