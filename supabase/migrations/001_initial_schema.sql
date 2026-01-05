@@ -2,8 +2,9 @@
 -- Description: Initial Supabase schema for projects, instances, notes, and user profiles with RLS
 -- Date: 2026-01-04
 -- Author: Project Tracking team
--- Related PR: ProjectTracking#TODO
+-- Related PR: ProjectTracking#38
 
+-- Start transaction so if any error occurs, none of the changes are applied
 BEGIN;
 
 -- Projects table with user ownership and status tracking
@@ -14,11 +15,11 @@ CREATE TABLE projects (
   name TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'active'
     CHECK (status IN ('active', 'completed', 'on_hold', 'reset', 'canceled')),
-  archived BOOLEAN NOT NULL DEFAULT false,
-  totalMinutes INTEGER NOT NULL DEFAULT 0,
-  createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  lastActiveAt TIMESTAMPTZ,
-  completedAt TIMESTAMPTZ,
+  is_archived BOOLEAN NOT NULL DEFAULT false,
+  total_minutes INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_active_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
   description TEXT,
   CONSTRAINT unique_user_project_name UNIQUE (user_id, name)
 );
@@ -26,12 +27,12 @@ CREATE TABLE projects (
 -- Instances table with user ownership
 CREATE TABLE instances (
   id BIGSERIAL PRIMARY KEY,
-  projectId BIGINT NOT NULL,
+  project_id BIGINT NOT NULL,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  startTime TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  endTime TIMESTAMPTZ,
-  durationMinutes INTEGER NOT NULL DEFAULT 0,
-  CONSTRAINT fk_instances_projects FOREIGN KEY (projectId)
+  start_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  end_time TIMESTAMPTZ,
+  duration_minutes INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT fk_instances_projects FOREIGN KEY (project_id)
     REFERENCES projects (id) ON DELETE CASCADE
   -- Note: User ownership verification for instances is enforced via RLS
   -- to avoid the performance cost of a CHECK constraint with a subquery.
@@ -40,10 +41,10 @@ CREATE TABLE instances (
 -- Notes table
 CREATE TABLE notes (
   id BIGSERIAL PRIMARY KEY,
-  instanceId BIGINT NOT NULL,
+  instance_id BIGINT NOT NULL,
   content TEXT NOT NULL,
-  createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT fk_notes_instances FOREIGN KEY (instanceId)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT fk_notes_instances FOREIGN KEY (instance_id)
     REFERENCES instances (id) ON DELETE CASCADE
 );
 
@@ -76,12 +77,12 @@ CREATE TRIGGER on_user_profiles_updated
 CREATE INDEX idx_projects_user_id ON projects(user_id);
 CREATE INDEX idx_projects_parent_project_id ON projects(parent_project_id);
 CREATE INDEX idx_projects_status ON projects(status);
-CREATE INDEX idx_projects_archived ON projects(archived);
-CREATE INDEX idx_projects_user_lastActiveAt ON projects(user_id, lastActiveAt DESC);
-CREATE INDEX idx_instances_projectId ON instances(projectId);
+CREATE INDEX idx_projects_archived ON projects(is_archived);
+CREATE INDEX idx_projects_user_lastActiveAt ON projects(user_id, last_active_at DESC);
+CREATE INDEX idx_instances_projectId ON instances(project_id);
 CREATE INDEX idx_instances_user_id ON instances(user_id);
-CREATE INDEX idx_instances_startTime ON instances(startTime DESC);
-CREATE INDEX idx_notes_instanceId ON notes(instanceId);
+CREATE INDEX idx_instances_startTime ON instances(start_time DESC);
+CREATE INDEX idx_notes_instanceId ON notes(instance_id);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
@@ -111,7 +112,7 @@ CREATE POLICY "Users can view own instances" ON instances
     auth.uid() = user_id AND
     EXISTS (
       SELECT 1 FROM projects
-      WHERE projects.id = instances.projectId
+      WHERE projects.id = instances.project_id
       AND projects.user_id = auth.uid()
     )
   );
@@ -121,7 +122,7 @@ CREATE POLICY "Users can insert own instances" ON instances
     auth.uid() = user_id AND
     EXISTS (
       SELECT 1 FROM projects
-      WHERE projects.id = instances.projectId
+      WHERE projects.id = instances.project_id
       AND projects.user_id = auth.uid()
     )
   );
@@ -131,7 +132,7 @@ CREATE POLICY "Users can update own instances" ON instances
     auth.uid() = user_id AND
     EXISTS (
       SELECT 1 FROM projects
-      WHERE projects.id = instances.projectId
+      WHERE projects.id = instances.project_id
       AND projects.user_id = auth.uid()
     )
   )
@@ -139,7 +140,7 @@ CREATE POLICY "Users can update own instances" ON instances
     auth.uid() = user_id AND
     EXISTS (
       SELECT 1 FROM projects
-      WHERE projects.id = instances.projectId
+      WHERE projects.id = instances.project_id
       AND projects.user_id = auth.uid()
     )
   );
@@ -149,7 +150,7 @@ CREATE POLICY "Users can delete own instances" ON instances
     auth.uid() = user_id AND
     EXISTS (
       SELECT 1 FROM projects
-      WHERE projects.id = instances.projectId
+      WHERE projects.id = instances.project_id
       AND projects.user_id = auth.uid()
     )
   );
@@ -159,8 +160,8 @@ CREATE POLICY "Users can view notes on own instances" ON notes
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM instances
-      JOIN projects ON instances.projectId = projects.id
-      WHERE instances.id = notes.instanceId
+      JOIN projects ON instances.project_id = projects.id
+      WHERE instances.id = notes.instance_id
       AND projects.user_id = auth.uid()
     )
   );
@@ -169,8 +170,8 @@ CREATE POLICY "Users can insert notes on own instances" ON notes
   FOR INSERT WITH CHECK (
     EXISTS (
       SELECT 1 FROM instances
-      JOIN projects ON instances.projectId = projects.id
-      WHERE instances.id = notes.instanceId
+      JOIN projects ON instances.project_id = projects.id
+      WHERE instances.id = notes.instance_id
       AND projects.user_id = auth.uid()
     )
   );
@@ -179,8 +180,8 @@ CREATE POLICY "Users can update notes on own instances" ON notes
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM instances
-      JOIN projects ON instances.projectId = projects.id
-      WHERE instances.id = notes.instanceId
+      JOIN projects ON instances.project_id = projects.id
+      WHERE instances.id = notes.instance_id
       AND projects.user_id = auth.uid()
     )
   );
@@ -189,8 +190,8 @@ CREATE POLICY "Users can delete notes on own instances" ON notes
   FOR DELETE USING (
     EXISTS (
       SELECT 1 FROM instances
-      JOIN projects ON instances.projectId = projects.id
-      WHERE instances.id = notes.instanceId
+      JOIN projects ON instances.project_id = projects.id
+      WHERE instances.id = notes.instance_id
       AND projects.user_id = auth.uid()
     )
   );
