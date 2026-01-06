@@ -236,9 +236,7 @@ class SupabaseDatabaseService {
           .eq('instances.user_id', userId)
           .order('created_at', ascending: true);
 
-      return (response as List)
-          .map((data) => _noteFromSupabase(data))
-          .toList();
+      return (response as List).map((data) => _noteFromSupabase(data)).toList();
     } catch (e) {
       debugPrint('Error fetching notes: $e');
       rethrow;

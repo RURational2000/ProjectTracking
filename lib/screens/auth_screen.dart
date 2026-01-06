@@ -136,7 +136,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       if (_errorMessage != null) ...[
                         Text(
                           _errorMessage!,
-                          style: TextStyle(color: Theme.of(context).colorScheme.error),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.error),
                         ),
                         const SizedBox(height: 8),
                       ],
@@ -146,7 +147,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : Text(_isSigningUp ? 'Sign up' : 'Sign in'),
                       ),

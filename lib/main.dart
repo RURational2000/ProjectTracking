@@ -11,7 +11,8 @@ import 'package:project_tracking/screens/auth_screen.dart';
 import 'package:project_tracking/screens/home_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Required for async operations in main
+  WidgetsFlutterBinding
+      .ensureInitialized(); // Required for async operations in main
   await dotenv.load(fileName: ".env.development");
 
   // Initialize sqflite for desktop platforms
