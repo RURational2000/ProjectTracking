@@ -151,7 +151,7 @@ class SupabaseDatabaseService {
           .from('instances')
           .select()
           .eq('user_id', userId)
-          .is_('end_time', null)
+          .isFilter('end_time', null)
           .order('start_time', ascending: false)
           .limit(1)
           .maybeSingle();
