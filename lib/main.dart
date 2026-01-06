@@ -27,9 +27,9 @@ void main() async {
   var supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
-    throw Exception(
-      'Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY. '
-      'Configure these with --dart-define before running the app.',
+    throw StateError(
+      'Missing environment variables: SUPABASE_URL and SUPABASE_ANON_KEY. '
+      'Please add them to your .env.development file and rebuild the app.',
     );
   }
 
