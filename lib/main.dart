@@ -1,20 +1,41 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:project_tracking/services/database_service.dart';
 import 'package:project_tracking/services/file_logging_service.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
+import 'package:project_tracking/screens/auth_screen.dart';
 import 'package:project_tracking/screens/home_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized(); // Required for async operations in main
+  await dotenv.load(fileName: ".env.development");
 
   // Initialize sqflite for desktop platforms
   if (Platform.isWindows || Platform.isLinux) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
+
+  // const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  // const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  var supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
+  var supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+
+  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    throw Exception(
+      'Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY. '
+      'Configure these with --dart-define before running the app.',
+    );
+  }
+
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
 
   // Initialize services
   final dbService = DatabaseService();
@@ -49,7 +70,18 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           useMaterial3: true,
         ),
-        home: const HomeScreen(),
+        home: StreamBuilder<AuthState>(
+          stream: Supabase.instance.client.auth.onAuthStateChange,
+          builder: (context, snapshot) {
+            final session = snapshot.data?.session ??
+                Supabase.instance.client.auth.currentSession;
+
+            if (session != null) {
+              return const HomeScreen();
+            }
+            return const AuthScreen();
+          },
+        ),
       ),
     );
   }

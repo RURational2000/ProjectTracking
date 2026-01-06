@@ -47,6 +47,9 @@ generated_plugins*.*
 generated_plugin_registrant.* # For older Flutter versions, newer versions handle this differently
 version.json # For older Flutter versions, newer versions handle this differently
 
+# Ignore environment files
+.env*
+
 # Symbolication related
 app.*.symbols
 
