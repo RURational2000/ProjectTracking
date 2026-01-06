@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:project_tracking/models/time_display_mode.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 import 'package:project_tracking/widgets/project_list.dart';
@@ -38,6 +39,21 @@ class HomeScreen extends StatelessWidget {
                   );
                 }).toList(),
               );
+            },
+          ),
+          IconButton(
+            tooltip: 'Sign out',
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              try {
+                await Supabase.instance.client.auth.signOut();
+                if (!context.mounted) return;
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Sign out failed: $e')),
+                );
+              }
             },
           ),
         ],
