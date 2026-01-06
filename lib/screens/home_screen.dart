@@ -47,6 +47,7 @@ class HomeScreen extends StatelessWidget {
             onPressed: () async {
               try {
                 await Supabase.instance.client.auth.signOut();
+                if (!context.mounted) return;
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
