@@ -424,8 +424,8 @@ Example migration template:
 
 BEGIN;
 
--- Your schema changes here
-ALTER TABLE table_name ADD COLUMN new_column TYPE;
+-- Update indexes if needed
+CREATE INDEX idx_table_name_new_column ON table_name(new_column);
 
 -- Update indexes if needed
 CREATE INDEX idx_table_newcolumn ON table_name(new_column);
