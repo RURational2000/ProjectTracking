@@ -149,8 +149,11 @@ import '../services/database_service.dart';
   } on PostgrestException catch (e) {
     // Handle database-specific errors (RLS, constraints, etc.)
     debugPrint('Database error: ${e.message}');
+  } on SocketException catch (e) {
+    // Handle network connectivity errors
+    debugPrint('Network error: $e');
   } catch (e) {
-    // Handle network and other errors
+    // Handle other unexpected errors
     debugPrint('Error: $e');
   }
   ```
