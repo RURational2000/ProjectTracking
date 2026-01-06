@@ -74,6 +74,9 @@ class MyApp extends StatelessWidget {
         home: StreamBuilder<AuthState>(
           stream: Supabase.instance.client.auth.onAuthStateChange,
           builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
             final session = snapshot.data?.session ??
                 Supabase.instance.client.auth.currentSession;
 
