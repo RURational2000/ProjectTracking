@@ -220,11 +220,13 @@ class SupabaseDatabaseService {
   }
 
   Future<List<Note>> getNotesForInstance(int instanceId) async {
+    final userId = _currentUserIdOrThrow();
     try {
       final response = await _client
           .from('notes')
-          .select()
+          .select('*, instances!inner(user_id)')
           .eq('instance_id', instanceId)
+          .eq('instances.user_id', userId)
           .order('created_at', ascending: true);
 
       return (response as List)
