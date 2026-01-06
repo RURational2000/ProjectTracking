@@ -92,6 +92,10 @@ class SupabaseDatabaseService {
   Future<void> updateProject(Project project) async {
     final userId = _currentUserIdOrThrow();
 
+    if (project.id == null) {
+      throw ArgumentError('Project must have an ID to be updated.');
+    }
+
     try {
       await _client
           .from('projects')
@@ -103,6 +107,7 @@ class SupabaseDatabaseService {
             'is_archived': project.isArchived,
             'completed_at': project.completedAt?.toIso8601String(),
             'description': project.description,
+            'parent_project_id': project.parentProjectId,
           })
           .eq('id', project.id!)
           .eq('user_id', userId);
