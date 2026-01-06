@@ -90,7 +90,7 @@ supabase/
 **PostgreSQL/Supabase Database Naming:**
 - **Tables**: Use snake_case (e.g., `projects`, `user_profiles`, `instances`)
 - **Columns**: Use snake_case (e.g., `user_id`, `created_at`, `total_minutes`, `parent_project_id`)
-- **Indexes**: Prefix with `idx_` and use snake_case (e.g., `idx_projects_user_id`, `idx_instances_startTime`)
+- **Indexes**: Prefix with `idx_` and use snake_case (e.g., `idx_projects_user_id`, `idx_instances_start_time`)
 - **Foreign Keys**: Prefix with `fk_` and use snake_case (e.g., `fk_instances_projects`, `fk_notes_instances`)
 - **Functions**: Use snake_case (e.g., `handle_updated_at`)
 - **Triggers**: Use snake_case (e.g., `on_user_profiles_updated`)
