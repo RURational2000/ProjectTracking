@@ -36,8 +36,10 @@ class SupabaseDatabaseService {
             'total_minutes': project.totalMinutes,
             'created_at': project.createdAt.toIso8601String(),
             'last_active_at': project.lastActiveAt?.toIso8601String(),
-            'status': 'active',
-            'is_archived': false,
+            'status': project.status,
+            'is_archived': project.isArchived,
+            'description': project.description,
+            'parent_project_id': project.parentProjectId,
           })
           .select('id')
           .single();
