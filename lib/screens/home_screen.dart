@@ -82,9 +82,13 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _showNewProjectDialog(BuildContext context) {
+    final provider = Provider.of<TrackingProvider>(context, listen: false);
     showDialog(
       context: context,
-      builder: (context) => const NewProjectDialog(),
+      builder: (context) => ChangeNotifierProvider<TrackingProvider>.value(
+        value: provider,
+        child: const NewProjectDialog(),
+      ),
     );
   }
 }

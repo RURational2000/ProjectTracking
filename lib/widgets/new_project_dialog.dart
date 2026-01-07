@@ -56,14 +56,29 @@ class _NewProjectDialogState extends State<NewProjectDialog> {
   Future<void> _createProject(BuildContext context) async {
     if (!_formKey.currentState!.validate()) return;
 
-    final provider = Provider.of<TrackingProvider>(context, listen: false);
-    await provider.createProject(_controller.text.trim());
-
-    if (context.mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Created project: ${_controller.text.trim()}')),
-      );
+    var projectName = _controller.text.trim();
+    var provider = Provider.of<TrackingProvider>(context, listen: false);
+    
+    // Close dialog first to avoid disposed context issues
+    Navigator.pop(context);
+    
+    try {
+      await provider.createProject(projectName);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Created project: $projectName')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating project: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }
