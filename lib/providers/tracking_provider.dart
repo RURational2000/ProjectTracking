@@ -3,13 +3,13 @@ import 'package:project_tracking/models/project.dart';
 import 'package:project_tracking/models/instance.dart';
 import 'package:project_tracking/models/note.dart';
 import 'package:project_tracking/models/time_display_mode.dart';
-import 'package:project_tracking/services/database_service.dart';
+import 'package:project_tracking/services/supabase_database_service.dart';
 import 'package:project_tracking/services/file_logging_service.dart';
 
 /// Central state management for tracking operations.
 /// Coordinates database and file logging in sync.
 class TrackingProvider with ChangeNotifier {
-  final DatabaseService dbService;
+  final SupabaseDatabaseService dbService;
   final FileLoggingService fileService;
 
   List<Project> _projects = [];
@@ -18,10 +18,7 @@ class TrackingProvider with ChangeNotifier {
   List<Note> _currentNotes = [];
   TimeDisplayMode _timeDisplayMode = TimeDisplayMode.project;
 
-  TrackingProvider({
-    required this.dbService,
-    required this.fileService,
-  }) {
+  TrackingProvider({required this.dbService, required this.fileService}) {
     _initialize();
   }
 
@@ -172,12 +169,18 @@ class TrackingProvider with ChangeNotifier {
       case TimeDisplayMode.week:
         final bounds = _getWeekBounds();
         return await dbService.getProjectMinutesInRange(
-            project.id!, bounds.start, bounds.end);
+          project.id!,
+          bounds.start,
+          bounds.end,
+        );
 
       case TimeDisplayMode.month:
         final bounds = _getMonthBounds();
         return await dbService.getProjectMinutesInRange(
-            project.id!, bounds.start, bounds.end);
+          project.id!,
+          bounds.start,
+          bounds.end,
+        );
 
       case TimeDisplayMode.project:
         return project.totalMinutes;
@@ -189,8 +192,11 @@ class TrackingProvider with ChangeNotifier {
     final now = DateTime.now();
     // In Dart, DateTime.monday is 1. So, we subtract (weekday - 1) days.
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final startDate =
-        DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+    final startDate = DateTime(
+      startOfWeek.year,
+      startOfWeek.month,
+      startOfWeek.day,
+    );
     final endDate = startDate.add(const Duration(days: 7));
     return _DateBounds(startDate, endDate);
   }
@@ -213,8 +219,12 @@ class _DateBounds {
 }
 
 extension NoteCopyWith on Note {
-  Note copyWith(
-      {int? id, int? instanceId, String? content, DateTime? createdAt}) {
+  Note copyWith({
+    int? id,
+    int? instanceId,
+    String? content,
+    DateTime? createdAt,
+  }) {
     return Note(
       id: id ?? this.id,
       instanceId: instanceId ?? this.instanceId,

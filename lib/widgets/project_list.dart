@@ -34,7 +34,12 @@ class ProjectList extends StatelessWidget {
                   // Directly get current duration without database query
                   final minutes = provider.getCurrentDuration();
                   return _buildProjectCard(
-                      context, provider, project, isActive, minutes);
+                    context,
+                    provider,
+                    project,
+                    isActive,
+                    minutes,
+                  );
                 },
               );
             }
@@ -44,7 +49,12 @@ class ProjectList extends StatelessWidget {
               builder: (context, snapshot) {
                 final minutes = snapshot.data ?? 0;
                 return _buildProjectCard(
-                    context, provider, project, isActive, minutes);
+                  context,
+                  provider,
+                  project,
+                  isActive,
+                  minutes,
+                );
               },
             );
           },
@@ -90,8 +100,9 @@ class ProjectList extends StatelessWidget {
                 icon: const Icon(Icons.play_circle_outline),
                 onPressed: () => _startProject(context, provider, project),
               ),
-        onTap:
-            isActive ? null : () => _startProject(context, provider, project),
+        onTap: isActive
+            ? null
+            : () => _startProject(context, provider, project),
       ),
     );
   }

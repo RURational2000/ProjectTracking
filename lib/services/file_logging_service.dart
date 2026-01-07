@@ -21,9 +21,11 @@ class FileLoggingService {
 
   /// Logs instance start event
   Future<void> logInstanceStart(Project project, Instance instance) async {
-    final timestamp =
-        DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.startTime);
-    final content = '''
+    final timestamp = DateFormat(
+      'yyyy-MM-dd HH:mm:ss',
+    ).format(instance.startTime);
+    final content =
+        '''
 ================================================================================
 PROJECT: ${project.name} (ID: ${project.id})
 INSTANCE START
@@ -43,10 +45,12 @@ Instance ID: ${instance.id}
   ) async {
     if (instance.endTime == null) return;
 
-    final startFormat =
-        DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.startTime);
-    final endFormat =
-        DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.endTime!);
+    final startFormat = DateFormat(
+      'yyyy-MM-dd HH:mm:ss',
+    ).format(instance.startTime);
+    final endFormat = DateFormat(
+      'yyyy-MM-dd HH:mm:ss',
+    ).format(instance.endTime!);
     final duration = _formatDuration(instance.durationMinutes);
 
     final buffer = StringBuffer();
@@ -65,7 +69,8 @@ Instance ID: ${instance.id}
     }
 
     buffer.writeln(
-        '================================================================================\n');
+      '================================================================================\n',
+    );
 
     await _appendToLog(project.name, buffer.toString());
   }
@@ -73,7 +78,8 @@ Instance ID: ${instance.id}
   /// Logs a note addition
   Future<void> logNote(Project project, Instance instance, Note note) async {
     final timestamp = DateFormat('yyyy-MM-dd HH:mm:ss').format(note.createdAt);
-    final content = '''
+    final content =
+        '''
 NOTE ADDED
 Time: $timestamp
 Instance ID: ${instance.id}
@@ -87,8 +93,9 @@ Content: ${note.content}
   /// Appends content to project-specific log file
   Future<void> _appendToLog(String projectName, String content) async {
     // Sanitize project name for filename
-    final sanitized =
-        projectName.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+    final sanitized = projectName
+        .replaceAll(RegExp(r'[^\w\s-]'), '')
+        .replaceAll(' ', '_');
     final filename = '${sanitized}_log.txt';
     final file = File(path.join(_logDirectory!, filename));
 

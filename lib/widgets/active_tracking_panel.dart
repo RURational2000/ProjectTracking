@@ -50,8 +50,9 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
                             ),
                           ),
                           StreamBuilder(
-                            stream:
-                                Stream.periodic(const Duration(seconds: 30)),
+                            stream: Stream.periodic(
+                              const Duration(seconds: 30),
+                            ),
                             builder: (context, snapshot) {
                               final duration = provider.getCurrentDuration();
                               return Text(
@@ -114,10 +115,12 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
                 const SizedBox(height: 8),
                 // Display existing notes
                 if (provider.currentNotes.isNotEmpty)
-                  ...provider.currentNotes.map((note) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text('• ${note.content}'),
-                      )),
+                  ...provider.currentNotes.map(
+                    (note) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text('• ${note.content}'),
+                    ),
+                  ),
                 const SizedBox(height: 8),
                 // Add note input
                 Row(
@@ -229,9 +232,9 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
   Future<void> _addNote(BuildContext context, TrackingProvider provider) async {
     final content = _noteController.text.trim();
     if (content.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Note cannot be empty')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Note cannot be empty')));
       return;
     }
 
@@ -239,22 +242,24 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
     _noteController.clear();
 
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Note added')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Note added')));
     }
   }
 
   Future<void> _endTracking(
-      BuildContext context, TrackingProvider provider) async {
+    BuildContext context,
+    TrackingProvider provider,
+  ) async {
     final projectName = provider.activeProject?.name ?? 'Unknown';
 
     await provider.endCurrentInstance(customEndTime: _customEndTime);
 
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ended tracking: $projectName')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ended tracking: $projectName')));
     }
 
     // Reset custom end time
