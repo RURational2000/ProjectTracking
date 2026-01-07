@@ -100,9 +100,8 @@ class ProjectList extends StatelessWidget {
                 icon: const Icon(Icons.play_circle_outline),
                 onPressed: () => _startProject(context, provider, project),
               ),
-        onTap: isActive
-            ? null
-            : () => _startProject(context, provider, project),
+        onTap:
+            isActive ? null : () => _startProject(context, provider, project),
       ),
     );
   }

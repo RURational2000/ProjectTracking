@@ -24,8 +24,7 @@ class FileLoggingService {
     final timestamp = DateFormat(
       'yyyy-MM-dd HH:mm:ss',
     ).format(instance.startTime);
-    final content =
-        '''
+    final content = '''
 ================================================================================
 PROJECT: ${project.name} (ID: ${project.id})
 INSTANCE START
@@ -78,8 +77,7 @@ Instance ID: ${instance.id}
   /// Logs a note addition
   Future<void> logNote(Project project, Instance instance, Note note) async {
     final timestamp = DateFormat('yyyy-MM-dd HH:mm:ss').format(note.createdAt);
-    final content =
-        '''
+    final content = '''
 NOTE ADDED
 Time: $timestamp
 Instance ID: ${instance.id}
@@ -93,9 +91,8 @@ Content: ${note.content}
   /// Appends content to project-specific log file
   Future<void> _appendToLog(String projectName, String content) async {
     // Sanitize project name for filename
-    final sanitized = projectName
-        .replaceAll(RegExp(r'[^\w\s-]'), '')
-        .replaceAll(' ', '_');
+    final sanitized =
+        projectName.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
     final filename = '${sanitized}_log.txt';
     final file = File(path.join(_logDirectory!, filename));
 

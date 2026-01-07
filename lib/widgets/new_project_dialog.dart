@@ -58,13 +58,13 @@ class _NewProjectDialogState extends State<NewProjectDialog> {
 
     var projectName = _controller.text.trim();
     var provider = Provider.of<TrackingProvider>(context, listen: false);
-    
+
     // Close dialog first to avoid disposed context issues
     Navigator.pop(context);
-    
+
     try {
       await provider.createProject(projectName);
-      
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Created project: $projectName')),
