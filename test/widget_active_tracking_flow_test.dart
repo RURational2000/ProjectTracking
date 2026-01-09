@@ -10,7 +10,8 @@ import 'mocks/fake_database_service.dart';
 import 'mocks/fake_file_logging_service.dart';
 
 void main() {
-  testWidgets('Starting a new project ends previous instance and logs start/end',
+  testWidgets(
+      'Starting a new project ends previous instance and logs start/end',
       (WidgetTester tester) async {
     final db = FakeDatabaseService();
     final file = FakeFileLoggingService();

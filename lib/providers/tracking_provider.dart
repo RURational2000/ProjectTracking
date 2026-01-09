@@ -89,9 +89,9 @@ class TrackingProvider with ChangeNotifier {
     final endTime = (customEndTime ?? DateTime.now());
     // Compute duration using UTC on both sides to avoid timezone skew
     final duration = endTime
-      .toUtc()
-      .difference(_activeInstance!.startTime.toUtc())
-      .inMinutes;
+        .toUtc()
+        .difference(_activeInstance!.startTime.toUtc())
+        .inMinutes;
 
     // Update instance
     final completedInstance = _activeInstance!.copyWith(

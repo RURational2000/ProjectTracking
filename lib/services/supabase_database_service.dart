@@ -37,8 +37,8 @@ class SupabaseDatabaseService implements DatabaseService {
             'user_id': userId,
             'name': project.name,
             'total_minutes': project.totalMinutes,
-        'created_at': project.createdAt.toUtc().toIso8601String(),
-        'last_active_at': project.lastActiveAt?.toUtc().toIso8601String(),
+            'created_at': project.createdAt.toUtc().toIso8601String(),
+            'last_active_at': project.lastActiveAt?.toUtc().toIso8601String(),
             'status': project.status,
             'is_archived': project.isArchived,
             'description': project.description,
@@ -110,10 +110,10 @@ class SupabaseDatabaseService implements DatabaseService {
           .update({
             'name': project.name,
             'total_minutes': project.totalMinutes,
-        'last_active_at': project.lastActiveAt?.toUtc().toIso8601String(),
+            'last_active_at': project.lastActiveAt?.toUtc().toIso8601String(),
             'status': project.status,
             'is_archived': project.isArchived,
-        'completed_at': project.completedAt?.toUtc().toIso8601String(),
+            'completed_at': project.completedAt?.toUtc().toIso8601String(),
             'description': project.description,
             'parent_project_id': project.parentProjectId,
           })
@@ -136,8 +136,8 @@ class SupabaseDatabaseService implements DatabaseService {
           .insert({
             'project_id': instance.projectId,
             'user_id': userId,
-        'start_time': instance.startTime.toUtc().toIso8601String(),
-        'end_time': instance.endTime?.toUtc().toIso8601String(),
+            'start_time': instance.startTime.toUtc().toIso8601String(),
+            'end_time': instance.endTime?.toUtc().toIso8601String(),
             'duration_minutes': instance.durationMinutes,
           })
           .select('id')
@@ -201,7 +201,7 @@ class SupabaseDatabaseService implements DatabaseService {
       await _client
           .from('instances')
           .update({
-        'end_time': instance.endTime?.toUtc().toIso8601String(),
+            'end_time': instance.endTime?.toUtc().toIso8601String(),
             'duration_minutes': instance.durationMinutes,
           })
           .eq('id', instance.id!)
@@ -265,7 +265,7 @@ class SupabaseDatabaseService implements DatabaseService {
     final userId = _currentUserIdOrThrow();
 
     try {
-        final response = await _client
+      final response = await _client
           .from('instances')
           .select('duration_minutes')
           .eq('project_id', projectId)
