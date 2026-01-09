@@ -3,13 +3,13 @@ import 'package:project_tracking/models/project.dart';
 import 'package:project_tracking/models/instance.dart';
 import 'package:project_tracking/models/note.dart';
 import 'package:project_tracking/models/time_display_mode.dart';
-import 'package:project_tracking/services/supabase_database_service.dart';
+import 'package:project_tracking/services/database_service.dart';
 import 'package:project_tracking/services/file_logging_service.dart';
 
 /// Central state management for tracking operations.
 /// Coordinates database and file logging in sync.
 class TrackingProvider with ChangeNotifier {
-  final SupabaseDatabaseService dbService;
+  final DatabaseService dbService;
   final FileLoggingService fileService;
 
   List<Project> _projects = [];
@@ -86,8 +86,12 @@ class TrackingProvider with ChangeNotifier {
   Future<void> endCurrentInstance({DateTime? customEndTime}) async {
     if (_activeInstance == null || _activeProject == null) return;
 
-    final endTime = customEndTime ?? DateTime.now();
-    final duration = endTime.difference(_activeInstance!.startTime).inMinutes;
+    final endTime = (customEndTime ?? DateTime.now());
+    // Compute duration using UTC on both sides to avoid timezone skew
+    final duration = endTime
+      .toUtc()
+      .difference(_activeInstance!.startTime.toUtc())
+      .inMinutes;
 
     // Update instance
     final completedInstance = _activeInstance!.copyWith(
@@ -140,7 +144,10 @@ class TrackingProvider with ChangeNotifier {
   /// Get duration of current active instance in minutes
   int getCurrentDuration() {
     if (_activeInstance == null) return 0;
-    return DateTime.now().difference(_activeInstance!.startTime).inMinutes;
+    return DateTime.now()
+        .toUtc()
+        .difference(_activeInstance!.startTime.toUtc())
+        .inMinutes;
   }
 
   /// Set the time display mode

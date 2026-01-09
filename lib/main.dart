@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:project_tracking/services/supabase_database_service.dart';
+import 'package:project_tracking/services/database_service.dart';
 import 'package:project_tracking/services/file_logging_service.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 import 'package:project_tracking/screens/auth_screen.dart';
@@ -98,7 +99,7 @@ class AuthGate extends StatelessWidget {
   }
 
   Future<_Services> _initializeServices() async {
-    final dbService = SupabaseDatabaseService();
+    final DatabaseService dbService = SupabaseDatabaseService();
     await dbService.initialize();
 
     final fileService = FileLoggingService();
@@ -109,7 +110,7 @@ class AuthGate extends StatelessWidget {
 }
 
 class _Services {
-  final SupabaseDatabaseService dbService;
+  final DatabaseService dbService;
   final FileLoggingService fileService;
 
   _Services({required this.dbService, required this.fileService});
