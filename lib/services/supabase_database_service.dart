@@ -241,11 +241,23 @@ class SupabaseDatabaseService implements DatabaseService {
   Future<List<Note>> getNotesForInstance(int instanceId) async {
     final userId = _currentUserIdOrThrow();
     try {
+      // First, verify the instance belongs to the user.
+      final instanceResponse = await _client
+          .from('instances')
+          .select('id')
+          .eq('id', instanceId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (instanceResponse == null) {
+        // The user does not own this instance, return empty list.
+        return [];
+      }
+
       final response = await _client
           .from('notes')
-          .select('*, instances!inner(user_id)')
+          .select()
           .eq('instance_id', instanceId)
-          .eq('instances.user_id', userId)
           .order('created_at', ascending: true);
 
       return (response as List).map((data) => _noteFromSupabase(data)).toList();
