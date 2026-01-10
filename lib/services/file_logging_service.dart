@@ -21,8 +21,9 @@ class FileLoggingService {
 
   /// Logs instance start event
   Future<void> logInstanceStart(Project project, Instance instance) async {
-    final timestamp =
-        DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.startTime);
+    final timestamp = DateFormat(
+      'yyyy-MM-dd HH:mm:ss',
+    ).format(instance.startTime);
     final content = '''
 ================================================================================
 PROJECT: ${project.name} (ID: ${project.id})
@@ -43,10 +44,12 @@ Instance ID: ${instance.id}
   ) async {
     if (instance.endTime == null) return;
 
-    final startFormat =
-        DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.startTime);
-    final endFormat =
-        DateFormat('yyyy-MM-dd HH:mm:ss').format(instance.endTime!);
+    final startFormat = DateFormat(
+      'yyyy-MM-dd HH:mm:ss',
+    ).format(instance.startTime);
+    final endFormat = DateFormat(
+      'yyyy-MM-dd HH:mm:ss',
+    ).format(instance.endTime!);
     final duration = _formatDuration(instance.durationMinutes);
 
     final buffer = StringBuffer();
@@ -65,7 +68,8 @@ Instance ID: ${instance.id}
     }
 
     buffer.writeln(
-        '================================================================================\n');
+      '================================================================================\n',
+    );
 
     await _appendToLog(project.name, buffer.toString());
   }

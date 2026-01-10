@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:project_tracking/services/database_service.dart';
 import 'package:project_tracking/services/file_logging_service.dart';
@@ -11,18 +9,9 @@ import 'package:project_tracking/screens/auth_screen.dart';
 import 'package:project_tracking/screens/home_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding
-      .ensureInitialized(); // Required for async operations in main
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env.development");
 
-  // Initialize sqflite for desktop platforms
-  if (Platform.isWindows || Platform.isLinux) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  }
-
-  // const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  // const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
   var supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
   var supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
@@ -33,60 +22,95 @@ void main() async {
     );
   }
 
-  await Supabase.initialize(
-    url: supabaseUrl,
-    anonKey: supabaseAnonKey,
-  );
+  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
 
-  // Initialize services
-  final dbService = DatabaseService();
-  await dbService.initialize();
-
-  final fileService = FileLoggingService();
-  await fileService.initialize();
-
-  runApp(MyApp(dbService: dbService, fileService: fileService));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final DatabaseService dbService;
-  final FileLoggingService fileService;
-
-  const MyApp({
-    super.key,
-    required this.dbService,
-    required this.fileService,
-  });
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => TrackingProvider(
-        dbService: dbService,
-        fileService: fileService,
+    return MaterialApp(
+      title: 'Project Tracking',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        useMaterial3: true,
       ),
-      child: MaterialApp(
-        title: 'Project Tracking',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
-        ),
-        home: StreamBuilder<AuthState>(
-          stream: Supabase.instance.client.auth.onAuthStateChange,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final session = snapshot.data?.session ??
-                Supabase.instance.client.auth.currentSession;
-
-            if (session != null) {
-              return const HomeScreen();
-            }
-            return const AuthScreen();
-          },
-        ),
-      ),
+      home: const AuthGate(),
     );
   }
+}
+
+/// Handles authentication state and routing
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<AuthState>(
+      stream: Supabase.instance.client.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final session = snapshot.hasData ? snapshot.data!.session : null;
+
+        if (session != null) {
+          // User is signed in - initialize services and show home screen
+          return FutureBuilder(
+            future: _initializeServices(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return Scaffold(
+                  body: Center(
+                    child: Text('Error initializing: ${snapshot.error}'),
+                  ),
+                );
+              }
+
+              final services = snapshot.data as _Services;
+              return ChangeNotifierProvider(
+                create: (_) => TrackingProvider(
+                  dbService: services.dbService,
+                  fileService: services.fileService,
+                ),
+                child: const HomeScreen(),
+              );
+            },
+          );
+        } else {
+          // User is not signed in
+          return const AuthScreen();
+        }
+      },
+    );
+  }
+
+  Future<_Services> _initializeServices() async {
+    final DatabaseService dbService = SupabaseDatabaseService();
+    await dbService.initialize();
+
+    final fileService = FileLoggingService();
+    await fileService.initialize();
+
+    return _Services(dbService: dbService, fileService: fileService);
+  }
+}
+
+class _Services {
+  final DatabaseService dbService;
+  final FileLoggingService fileService;
+
+  _Services({required this.dbService, required this.fileService});
 }

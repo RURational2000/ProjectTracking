@@ -50,9 +50,9 @@ class HomeScreen extends StatelessWidget {
                 if (!context.mounted) return;
               } catch (e) {
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Sign out failed: $e')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Sign out failed: $e')));
               }
             },
           ),
@@ -70,9 +70,7 @@ class HomeScreen extends StatelessWidget {
             },
           ),
           // Project list
-          const Expanded(
-            child: ProjectList(),
-          ),
+          const Expanded(child: ProjectList()),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -84,9 +82,13 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _showNewProjectDialog(BuildContext context) {
+    final provider = Provider.of<TrackingProvider>(context, listen: false);
     showDialog(
       context: context,
-      builder: (context) => const NewProjectDialog(),
+      builder: (context) => ChangeNotifierProvider<TrackingProvider>.value(
+        value: provider,
+        child: const NewProjectDialog(),
+      ),
     );
   }
 }

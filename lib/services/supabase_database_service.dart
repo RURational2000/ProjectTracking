@@ -3,14 +3,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:project_tracking/models/project.dart';
 import 'package:project_tracking/models/instance.dart';
 import 'package:project_tracking/models/note.dart';
+import 'package:project_tracking/services/database_service.dart';
 
 /// Supabase database service for cloud-based persistence.
 /// Manages Projects, Instances (work sessions), and Notes with multi-user support.
 /// Requires authentication via Supabase Auth.
-class SupabaseDatabaseService {
+class SupabaseDatabaseService implements DatabaseService {
   final SupabaseClient _client = Supabase.instance.client;
 
   /// Initialize service - Supabase client must be initialized in main.dart
+  @override
   Future<void> initialize() async {
     // Verify we have an authenticated user
     final user = _client.auth.currentUser;
@@ -24,6 +26,7 @@ class SupabaseDatabaseService {
   String? get currentUserId => _client.auth.currentUser?.id;
 
   // Project operations
+  @override
   Future<int> insertProject(Project project) async {
     final userId = _currentUserIdOrThrow();
 
@@ -34,8 +37,8 @@ class SupabaseDatabaseService {
             'user_id': userId,
             'name': project.name,
             'total_minutes': project.totalMinutes,
-            'created_at': project.createdAt.toIso8601String(),
-            'last_active_at': project.lastActiveAt?.toIso8601String(),
+            'created_at': project.createdAt.toUtc().toIso8601String(),
+            'last_active_at': project.lastActiveAt?.toUtc().toIso8601String(),
             'status': project.status,
             'is_archived': project.isArchived,
             'description': project.description,
@@ -51,6 +54,7 @@ class SupabaseDatabaseService {
     }
   }
 
+  @override
   Future<List<Project>> getAllProjects() async {
     final userId = _currentUserIdOrThrow();
 
@@ -72,6 +76,7 @@ class SupabaseDatabaseService {
     }
   }
 
+  @override
   Future<Project?> getProject(int id) async {
     final userId = _currentUserIdOrThrow();
 
@@ -91,6 +96,7 @@ class SupabaseDatabaseService {
     }
   }
 
+  @override
   Future<void> updateProject(Project project) async {
     final userId = _currentUserIdOrThrow();
 
@@ -104,10 +110,10 @@ class SupabaseDatabaseService {
           .update({
             'name': project.name,
             'total_minutes': project.totalMinutes,
-            'last_active_at': project.lastActiveAt?.toIso8601String(),
+            'last_active_at': project.lastActiveAt?.toUtc().toIso8601String(),
             'status': project.status,
             'is_archived': project.isArchived,
-            'completed_at': project.completedAt?.toIso8601String(),
+            'completed_at': project.completedAt?.toUtc().toIso8601String(),
             'description': project.description,
             'parent_project_id': project.parentProjectId,
           })
@@ -120,6 +126,7 @@ class SupabaseDatabaseService {
   }
 
   // Instance operations
+  @override
   Future<int> insertInstance(Instance instance) async {
     final userId = _currentUserIdOrThrow();
 
@@ -129,8 +136,8 @@ class SupabaseDatabaseService {
           .insert({
             'project_id': instance.projectId,
             'user_id': userId,
-            'start_time': instance.startTime.toIso8601String(),
-            'end_time': instance.endTime?.toIso8601String(),
+            'start_time': instance.startTime.toUtc().toIso8601String(),
+            'end_time': instance.endTime?.toUtc().toIso8601String(),
             'duration_minutes': instance.durationMinutes,
           })
           .select('id')
@@ -143,6 +150,7 @@ class SupabaseDatabaseService {
     }
   }
 
+  @override
   Future<Instance?> getActiveInstance() async {
     final userId = _currentUserIdOrThrow();
 
@@ -164,6 +172,7 @@ class SupabaseDatabaseService {
     }
   }
 
+  @override
   Future<List<Instance>> getInstancesForProject(int projectId) async {
     final userId = _currentUserIdOrThrow();
 
@@ -184,6 +193,7 @@ class SupabaseDatabaseService {
     }
   }
 
+  @override
   Future<void> updateInstance(Instance instance) async {
     final userId = _currentUserIdOrThrow();
 
@@ -191,7 +201,7 @@ class SupabaseDatabaseService {
       await _client
           .from('instances')
           .update({
-            'end_time': instance.endTime?.toIso8601String(),
+            'end_time': instance.endTime?.toUtc().toIso8601String(),
             'duration_minutes': instance.durationMinutes,
           })
           .eq('id', instance.id!)
@@ -203,6 +213,7 @@ class SupabaseDatabaseService {
   }
 
   // Note operations - only saved when not empty
+  @override
   Future<int> insertNote(Note note) async {
     if (note.content.trim().isEmpty) {
       throw ArgumentError('Note content cannot be empty');
@@ -226,14 +237,27 @@ class SupabaseDatabaseService {
     }
   }
 
+  @override
   Future<List<Note>> getNotesForInstance(int instanceId) async {
     final userId = _currentUserIdOrThrow();
     try {
+      // First, verify the instance belongs to the user.
+      final instanceResponse = await _client
+          .from('instances')
+          .select('id')
+          .eq('id', instanceId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (instanceResponse == null) {
+        // The user does not own this instance, return empty list.
+        return [];
+      }
+
       final response = await _client
           .from('notes')
-          .select('*, instances!inner(user_id)')
+          .select()
           .eq('instance_id', instanceId)
-          .eq('instances.user_id', userId)
           .order('created_at', ascending: true);
 
       return (response as List).map((data) => _noteFromSupabase(data)).toList();
@@ -244,6 +268,7 @@ class SupabaseDatabaseService {
   }
 
   /// Get total minutes for a project in a date range
+  @override
   Future<int> getProjectMinutesInRange(
     int projectId,
     DateTime startDate,
@@ -258,8 +283,8 @@ class SupabaseDatabaseService {
           .eq('project_id', projectId)
           .eq('user_id', userId)
           .not('end_time', 'is', null)
-          .gte('start_time', startDate.toIso8601String())
-          .lt('start_time', endDate.toIso8601String());
+          .gte('start_time', startDate.toUtc().toIso8601String())
+          .lt('start_time', endDate.toUtc().toIso8601String());
 
       if (response.isEmpty) return 0;
 
@@ -275,6 +300,7 @@ class SupabaseDatabaseService {
   }
 
   /// Get total minutes for a project on a specific date
+  @override
   Future<int> getProjectMinutesForDate(int projectId, DateTime date) async {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));

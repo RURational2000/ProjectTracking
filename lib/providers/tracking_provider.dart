@@ -18,10 +18,7 @@ class TrackingProvider with ChangeNotifier {
   List<Note> _currentNotes = [];
   TimeDisplayMode _timeDisplayMode = TimeDisplayMode.project;
 
-  TrackingProvider({
-    required this.dbService,
-    required this.fileService,
-  }) {
+  TrackingProvider({required this.dbService, required this.fileService}) {
     _initialize();
   }
 
@@ -89,8 +86,12 @@ class TrackingProvider with ChangeNotifier {
   Future<void> endCurrentInstance({DateTime? customEndTime}) async {
     if (_activeInstance == null || _activeProject == null) return;
 
-    final endTime = customEndTime ?? DateTime.now();
-    final duration = endTime.difference(_activeInstance!.startTime).inMinutes;
+    final endTime = (customEndTime ?? DateTime.now());
+    // Compute duration using UTC on both sides to avoid timezone skew
+    final duration = endTime
+        .toUtc()
+        .difference(_activeInstance!.startTime.toUtc())
+        .inMinutes;
 
     // Update instance
     final completedInstance = _activeInstance!.copyWith(
@@ -143,7 +144,10 @@ class TrackingProvider with ChangeNotifier {
   /// Get duration of current active instance in minutes
   int getCurrentDuration() {
     if (_activeInstance == null) return 0;
-    return DateTime.now().difference(_activeInstance!.startTime).inMinutes;
+    return DateTime.now()
+        .toUtc()
+        .difference(_activeInstance!.startTime.toUtc())
+        .inMinutes;
   }
 
   /// Set the time display mode
@@ -172,12 +176,18 @@ class TrackingProvider with ChangeNotifier {
       case TimeDisplayMode.week:
         final bounds = _getWeekBounds();
         return await dbService.getProjectMinutesInRange(
-            project.id!, bounds.start, bounds.end);
+          project.id!,
+          bounds.start,
+          bounds.end,
+        );
 
       case TimeDisplayMode.month:
         final bounds = _getMonthBounds();
         return await dbService.getProjectMinutesInRange(
-            project.id!, bounds.start, bounds.end);
+          project.id!,
+          bounds.start,
+          bounds.end,
+        );
 
       case TimeDisplayMode.project:
         return project.totalMinutes;
@@ -189,8 +199,11 @@ class TrackingProvider with ChangeNotifier {
     final now = DateTime.now();
     // In Dart, DateTime.monday is 1. So, we subtract (weekday - 1) days.
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final startDate =
-        DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+    final startDate = DateTime(
+      startOfWeek.year,
+      startOfWeek.month,
+      startOfWeek.day,
+    );
     final endDate = startDate.add(const Duration(days: 7));
     return _DateBounds(startDate, endDate);
   }
@@ -213,8 +226,12 @@ class _DateBounds {
 }
 
 extension NoteCopyWith on Note {
-  Note copyWith(
-      {int? id, int? instanceId, String? content, DateTime? createdAt}) {
+  Note copyWith({
+    int? id,
+    int? instanceId,
+    String? content,
+    DateTime? createdAt,
+  }) {
     return Note(
       id: id ?? this.id,
       instanceId: instanceId ?? this.instanceId,
