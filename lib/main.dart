@@ -60,6 +60,10 @@ class _AuthGateState extends State<AuthGate> {
   @override
   void initState() {
     super.initState();
+    // Handle any existing session on startup
+    if (Supabase.instance.client.auth.currentSession != null) {
+      _initializeServicesAndProvider();
+    }
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final session = data.session;
