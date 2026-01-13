@@ -166,6 +166,8 @@ flutter run -d ios
 
 - **All platforms**: Application Documents directory under
   `ProjectTrackingLogs/`
+-- Windows Location: C:\Users\<user name>\OneDrive\Documents\ProjectTrackingLogs
+-- Android Location: Android/data/com.example.project_tracking/files/ProjectTrackingLogs/
 
 ## Testing
 
