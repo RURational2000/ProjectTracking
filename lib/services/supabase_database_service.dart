@@ -241,23 +241,13 @@ class SupabaseDatabaseService implements DatabaseService {
   Future<List<Note>> getNotesForInstance(int instanceId) async {
     final userId = _currentUserIdOrThrow();
     try {
-      // First, verify the instance belongs to the user.
-      final instanceResponse = await _client
-          .from('instances')
-          .select('id')
-          .eq('id', instanceId)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      if (instanceResponse == null) {
-        // The user does not own this instance, return empty list.
-        return [];
-      }
-
+      // Jone notes with instances and filter by user_id and 
+      // instance_id.  This is to ensure users can only access 
+      // their own notes, protected by RLS policies.
       final response = await _client
           .from('notes')
-          .select()
-          .eq('instance_id', instanceId)
+          .select('*, instances!inner(user_id)')
+          .eq('instances.user_id', userId)
           .order('created_at', ascending: true);
 
       return (response as List).map((data) => _noteFromSupabase(data)).toList();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -44,73 +46,71 @@ class MyApp extends StatelessWidget {
 }
 
 /// Handles authentication state and routing
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<AuthState>(
-      stream: Supabase.instance.client.auth.onAuthStateChange,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+  State<AuthGate> createState() => _AuthGateState();
+}
 
-        final session = snapshot.hasData ? snapshot.data!.session : null;
+class _AuthGateState extends State<AuthGate> {
+  late final StreamSubscription<AuthState> _authSubscription;
+  TrackingProvider? _trackingProvider;
 
-        if (session != null) {
-          // User is signed in - initialize services and show home screen
-          return FutureBuilder(
-            future: _initializeServices(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return Scaffold(
-                  body: Center(
-                    child: Text('Error initializing: ${snapshot.error}'),
-                  ),
-                );
-              }
-
-              final services = snapshot.data as _Services;
-              return ChangeNotifierProvider(
-                create: (_) => TrackingProvider(
-                  dbService: services.dbService,
-                  fileService: services.fileService,
-                ),
-                child: const HomeScreen(),
-              );
-            },
-          );
-        } else {
-          // User is not signed in
-          return const AuthScreen();
-        }
-      },
-    );
+  @override
+  void initState() {
+    super.initState();
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final session = data.session;
+      if (session != null && _trackingProvider == null) {
+        _initializeServicesAndProvider();
+      } else if (session == null) {
+        setState(() {
+          _trackingProvider = null;
+        });
+      }
+    });
   }
 
-  Future<_Services> _initializeServices() async {
-    final DatabaseService dbService = SupabaseDatabaseService();
+  Future<void> _initializeServicesAndProvider() async {
+    final dbService = SupabaseDatabaseService();
     await dbService.initialize();
 
     final fileService = FileLoggingService();
     await fileService.initialize();
 
-    return _Services(dbService: dbService, fileService: fileService);
+    if (mounted) {
+      setState(() {
+        _trackingProvider = TrackingProvider(
+            dbService: dbService, fileService: fileService);
+      });
+    }
   }
-}
 
-class _Services {
-  final DatabaseService dbService;
-  final FileLoggingService fileService;
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
 
-  _Services({required this.dbService, required this.fileService});
+  @override
+  Widget build(BuildContext context) {
+    if (_trackingProvider != null) {
+      return ChangeNotifierProvider.value(
+        value: _trackingProvider!,
+        child: const HomeScreen(),
+      );
+    }
+
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) {
+      return const AuthScreen();
+    }
+
+    // Services are initializing
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+    );
+  }
 }
