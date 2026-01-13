@@ -82,8 +82,8 @@ class _AuthGateState extends State<AuthGate> {
 
     if (mounted) {
       setState(() {
-        _trackingProvider = TrackingProvider(
-            dbService: dbService, fileService: fileService);
+        _trackingProvider =
+            TrackingProvider(dbService: dbService, fileService: fileService);
       });
     }
   }
