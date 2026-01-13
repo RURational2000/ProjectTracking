@@ -46,6 +46,8 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           );
         }
+        // After sign up, switch to sign in mode
+        _toggleMode();
       } else {
         await auth.signInWithPassword(email: email, password: password);
       }
