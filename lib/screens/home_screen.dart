@@ -41,19 +41,39 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-          IconButton(
-            tooltip: 'Sign out',
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              try {
-                await Supabase.instance.client.auth.signOut();
-                if (!context.mounted) return;
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Sign out failed: $e')));
-              }
+          StatefulBuilder(
+            builder: (context, setState) {
+              bool isLoading = false;
+              return IconButton(
+                tooltip: 'Sign out',
+                icon: isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.logout),
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() => isLoading = true);
+                        try {
+                          await Supabase.instance.client.auth.signOut();
+                          // The AuthGate will handle navigation.
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(
+                            SnackBar(content: Text('Sign out failed: $e')),
+                          );
+                        } finally {
+                          if (context.mounted) {
+                            setState(() => isLoading = false);
+                          }
+                        }
+                      },
+              );
             },
           ),
         ],
