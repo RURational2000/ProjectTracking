@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:project_tracking/models/time_display_mode.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 import 'package:project_tracking/widgets/project_list.dart';
@@ -17,7 +18,7 @@ class HomeScreen extends StatelessWidget {
         elevation: 2,
         actions: [
           Consumer<TrackingProvider>(
-            builder: (context, provider, child) {
+            builder: (context, provider, _) {
               return PopupMenuButton<TimeDisplayMode>(
                 icon: const Icon(Icons.access_time),
                 tooltip: 'Time Display Mode',
@@ -40,13 +41,14 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
+          const _SignOutButton(),
         ],
       ),
       body: Column(
         children: [
           // Active tracking panel (if instance is active)
           Consumer<TrackingProvider>(
-            builder: (context, provider, child) {
+            builder: (context, provider, _) {
               if (provider.hasActiveInstance) {
                 return const ActiveTrackingPanel();
               }
@@ -54,9 +56,7 @@ class HomeScreen extends StatelessWidget {
             },
           ),
           // Project list
-          const Expanded(
-            child: ProjectList(),
-          ),
+          const Expanded(child: ProjectList()),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -68,9 +68,55 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _showNewProjectDialog(BuildContext context) {
+    final provider = Provider.of<TrackingProvider>(context, listen: false);
     showDialog(
       context: context,
-      builder: (context) => const NewProjectDialog(),
+      builder: (context) => ChangeNotifierProvider<TrackingProvider>.value(
+        value: provider,
+        child: const NewProjectDialog(),
+      ),
     );
+  }
+}
+
+class _SignOutButton extends StatefulWidget {
+  const _SignOutButton();
+
+  @override
+  State<_SignOutButton> createState() => _SignOutButtonState();
+}
+
+class _SignOutButtonState extends State<_SignOutButton> {
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Sign out',
+      icon: _isLoading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.logout),
+      onPressed: _isLoading ? null : _signOut,
+    );
+  }
+
+  Future<void> _signOut() async {
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sign out failed: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }
