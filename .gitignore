@@ -75,12 +75,21 @@ android/**/GeneratedPluginRegistrant.* # For older Flutter versions, newer versi
 # Windows build artifacts
 /windows/flutter/ephemeral/
 
+# Linux - ignore entire directory (auto-generated)
+/linux/
+
 # Linux build artifacts
 /linux/flutter/ephemeral/
+
+# macOS - ignore entire directory (auto-generated)
+/macos/
 
 # macOS build artifacts
 /macos/Flutter/ephemeral/
 /macos/Flutter/GeneratedPluginRegistrant.swift
+
+# iOS - ignore entire directory (auto-generated)
+/ios/
 
 # iOS build artifacts
 /ios/Flutter/ephemeral/
