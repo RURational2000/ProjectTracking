@@ -18,7 +18,7 @@ class HomeScreen extends StatelessWidget {
         elevation: 2,
         actions: [
           Consumer<TrackingProvider>(
-            builder: (context, provider, child) {
+            builder: (context, provider, _) {
               return PopupMenuButton<TimeDisplayMode>(
                 icon: const Icon(Icons.access_time),
                 tooltip: 'Time Display Mode',
@@ -41,48 +41,14 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-          StatefulBuilder(
-            builder: (context, setState) {
-              bool isLoading = false;
-              return IconButton(
-                tooltip: 'Sign out',
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.logout),
-                onPressed: isLoading
-                    ? null
-                    : () async {
-                        setState(() => isLoading = true);
-                        try {
-                          await Supabase.instance.client.auth.signOut();
-                          // The AuthGate will handle navigation.
-                        } catch (e) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(
-                            SnackBar(content: Text('Sign out failed: $e')),
-                          );
-                        } finally {
-                          if (context.mounted) {
-                            setState(() => isLoading = false);
-                          }
-                        }
-                      },
-              );
-            },
-          ),
+          const _SignOutButton(),
         ],
       ),
       body: Column(
         children: [
           // Active tracking panel (if instance is active)
           Consumer<TrackingProvider>(
-            builder: (context, provider, child) {
+            builder: (context, provider, _) {
               if (provider.hasActiveInstance) {
                 return const ActiveTrackingPanel();
               }
@@ -110,5 +76,47 @@ class HomeScreen extends StatelessWidget {
         child: const NewProjectDialog(),
       ),
     );
+  }
+}
+
+class _SignOutButton extends StatefulWidget {
+  const _SignOutButton();
+
+  @override
+  State<_SignOutButton> createState() => _SignOutButtonState();
+}
+
+class _SignOutButtonState extends State<_SignOutButton> {
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Sign out',
+      icon: _isLoading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.logout),
+      onPressed: _isLoading ? null : _signOut,
+    );
+  }
+
+  Future<void> _signOut() async {
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sign out failed: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }
