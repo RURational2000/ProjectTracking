@@ -38,6 +38,7 @@ Closes #
 - [ ] Linux
 - [ ] Android
 - [ ] iOS
+- [ ] Web
 
 ### Test Steps
 
