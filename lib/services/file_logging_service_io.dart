@@ -20,12 +20,10 @@ class FileLoggingService {
       // This directory is accessible via file managers and "Files" app
       final Directory? externalDir = await getExternalStorageDirectory();
       appDir = externalDir ?? await getApplicationDocumentsDirectory();
-    } else if (Platform.isIOS) {
-      // iOS: Use application documents directory
-      // This can be made accessible via Files app with proper Info.plist configuration
-      appDir = await getApplicationDocumentsDirectory();
     } else {
-      // Windows, Linux, macOS: Use application documents directory
+      // iOS, Windows, Linux, macOS: Use application documents directory
+      // iOS: Accessible via Files app with proper Info.plist configuration
+      // Desktop: Already accessible via system file explorer
       appDir = await getApplicationDocumentsDirectory();
     }
     
