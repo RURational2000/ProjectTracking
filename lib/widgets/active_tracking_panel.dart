@@ -63,7 +63,7 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Start: ${_formatDateTime(provider.activeInstance!.startTime)}',
+                            'Start: ${_formatDateTime(provider.activeInstance!.startTime.toLocal())}',
                             style: TextStyle(
                               color: Colors.grey.shade700,
                               fontSize: 12,

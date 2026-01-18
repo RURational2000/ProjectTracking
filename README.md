@@ -1,21 +1,29 @@
 # Project Tracking App
 
-A cross-platform time tracking application for managing projects with
-instance-based logging and notes.
+A cross-platform time tracking application for managing projects and time with
+instance-based logging and notes.  Text based note files (not available on the web-
+based version) are designed for easy user augmentation using Notepad (or similar
+text editor) independent of the app.
 
 ## Features
 
-- **Project Management**: Create and select projects to track with status tracking
+- **Project Management**: Create and select projects to track time spent.
+  Projects may also be regular blocks of time such as 'Morning Chores' or
+  'Catch Up on Emails'. Projects may be renamed or deleted.
 - **Instance Tracking**: Start/stop work sessions (instances) with automatic
-  time accumulation
+  time accumulation.
 - **Time Display Modes**: View project time as current instance, daily, weekly,
-  monthly, or complete totals
-- **Multiple Notes**: Add multiple notes per instance, saved only when non-empty
-- **Cloud Storage**: Supabase-powered PostgreSQL database with real-time synchronization
-- **Multi-User Support**: Individual user identification with Row-Level Security
-- **Dual Storage**: Cloud database for querying + text file logs for local verification
-- **Cross-Platform**: Runs on Android, iOS, Windows, and Linux
-
+  monthly, or complete totals.
+- **Multiple Notes**: Add multiple notes per instance, saved only when non-empty.
+- **Cloud Storage**: Supabase-powered PostgreSQL database with real-time synchronization.
+- **Multi-User Support**: Individual user identification with Row-Level Security.
+- **Dual Storage**: Cloud database for querying + text file logs for local
+  verification and additional notes.
+- **Cross-Platform**: Runs on Android, iOS, Windows, and Linux.  A web version
+  is available for demo purposes where separate text logging is not supported.
+- **Adjustable End Time**: Click on the end time to adjust length of instance,
+  e.g. when instance was not properly closed.
+  
 ### Time Display Modes
 
 The app includes a global time display mode selector (clock icon in the
@@ -64,6 +72,7 @@ app bar) that allows you to view project time in different contexts:
 - **Project**: Container with accumulated time across all instances, owned by a user
 - **Instance**: Single work session with start/end timestamps
 - **Note**: Text entry associated with an instance
+- **UserProfile**: User profile associated with the instance
 
 ### Storage Strategy
 
@@ -103,11 +112,17 @@ pubspec.yaml - flutter configuration file
              flutter pub command
 .github - workflows and git hub specific instructions
 .idea - folder containing android development studio artifacts; needed for development
+.vscode - folder containing visual studio artifacts
 android - gradle build items
+build - contains build artifacts and also the web build for publishing
+docs - supporting documents for the application 
 ios - iOS xcode build items
-windows - build items for windows
 linux - build items for linux
+macos - macOS xcode build items
+supabase - supabase database build items
 test - container Project Tracking unit tests
+web - web build items
+windows - build items for windows
 lib/
 ├── main.dart                          # App initialization with service setup
 ├── models/                            # Data models
@@ -180,12 +195,14 @@ Log files are stored in platform-specific user-accessible locations:
 - **iOS**: `<App Container>/Documents/ProjectTrackingLogs/`
   - Accessible via Files app when file sharing is enabled
   - To enable file sharing, add these keys to `ios/Runner/Info.plist`:
+
     ```xml
     <key>UIFileSharingEnabled</key>
     <true/>
     <key>LSSupportsOpeningDocumentsInPlace</key>
     <true/>
     ```
+
   - After enabling, logs can be accessed: Files app → On My iPhone → Project Tracking → ProjectTrackingLogs
 
 ## Testing
