@@ -405,6 +405,14 @@ Edit `FileLoggingService.logInstanceStart/End()` methods. Format uses:
 - Separator lines: `===` (80 chars) for instance boundaries
 - Separator lines: `---` for note sections
 
+### Log File Storage Locations
+Log files are stored in platform-specific directories for optimal user accessibility:
+- **Android**: External storage directory (`getExternalStorageDirectory()`) - accessible via file managers
+- **iOS**: Application documents directory - accessible via Files app when file sharing is enabled in Info.plist
+- **Windows/Linux/macOS**: Application documents directory - accessible via system file explorer
+- Implementation in `lib/services/file_logging_service_io.dart` uses `Platform.isAndroid`/`Platform.isIOS` checks
+- See `docs/log-file-accessibility.md` for detailed configuration and troubleshooting
+
 ### Creating Database Migrations
 1. **File naming**: Use sequential numbers: `00X_description.sql` (e.g., `002_add_status_field.sql`)
 2. **Always use transactions**: Wrap changes in `BEGIN;` and `COMMIT;` to ensure atomicity
