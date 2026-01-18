@@ -28,6 +28,8 @@ The Project Tracking app creates human-readable log files for each project as an
 
 **Location**: `/storage/emulated/0/Android/data/com.example.project_tracking/files/ProjectTrackingLogs/`
 
+(Replace `com.example.project_tracking` with your app's package name if you've customized it)
+
 **Accessibility**: 
 - Accessible via file manager apps (Files by Google, Samsung My Files, etc.)
 - Navigate to: Internal Storage → Android → data → com.example.project_tracking → files → ProjectTrackingLogs
