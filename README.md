@@ -112,11 +112,17 @@ pubspec.yaml - flutter configuration file
              flutter pub command
 .github - workflows and git hub specific instructions
 .idea - folder containing android development studio artifacts; needed for development
+.vscode - folder containing visual studio artifacts
 android - gradle build items
+build - contains build artifacts and also the web build for publishing
+docs - supporting documents for the application 
 ios - iOS xcode build items
-windows - build items for windows
 linux - build items for linux
+macos - macOS xcode build items
+supabase - supabase database build items
 test - container Project Tracking unit tests
+web - web build items
+windows - build items for windows
 lib/
 ├── main.dart                          # App initialization with service setup
 ├── models/                            # Data models
