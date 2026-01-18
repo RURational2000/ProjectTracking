@@ -6,6 +6,7 @@ pluginManagement {
         localPropertiesFile.inputStream().use { properties.load(it) }
         properties.getProperty("flutter.sdk")
     } else {
+        println("local.properties not found. Generate it by running 'flutter build'.")
         null
     }
     
