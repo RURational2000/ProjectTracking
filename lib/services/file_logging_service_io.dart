@@ -12,7 +12,23 @@ class FileLoggingService {
   String? _logDirectory;
 
   Future<void> initialize() async {
-    final appDir = await getApplicationDocumentsDirectory();
+    final Directory appDir;
+    
+    // Use platform-specific storage locations for better accessibility
+    if (Platform.isAndroid) {
+      // Android: Use external storage directory for user-accessible files
+      // This directory is accessible via file managers and "Files" app
+      final Directory? externalDir = await getExternalStorageDirectory();
+      appDir = externalDir ?? await getApplicationDocumentsDirectory();
+    } else if (Platform.isIOS) {
+      // iOS: Use application documents directory
+      // This can be made accessible via Files app with proper Info.plist configuration
+      appDir = await getApplicationDocumentsDirectory();
+    } else {
+      // Windows, Linux, macOS: Use application documents directory
+      appDir = await getApplicationDocumentsDirectory();
+    }
+    
     _logDirectory = path.join(appDir.path, 'ProjectTrackingLogs');
     await Directory(_logDirectory!).create(recursive: true);
   }
