@@ -193,8 +193,9 @@ class _ExportDialogState extends State<ExportDialog> {
   Future<bool> _saveFile(String content, String extension) async {
     try {
       if (kIsWeb) {
-        // Web platform: download functionality not implemented
-        // Show specific message to user
+        // TODO: Implement web download using dart:html AnchorElement with download attribute
+        // Example: final blob = Blob([content]); final url = Url.createObjectUrlFromBlob(blob);
+        // final anchor = AnchorElement(href: url)..download = filename..click();
         debugPrint('Export not supported on web platform');
         return false;
       }
