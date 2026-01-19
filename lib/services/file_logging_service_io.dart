@@ -23,7 +23,7 @@ class FileLoggingService {
         // Fail loudly if the user-accessible external storage is not available.
         // Falling back to the internal directory would be confusing for users
         // who expect to find the logs in a specific, accessible location.
-        throw FileSystemException(
+        throw const FileSystemException(
             "External storage directory not available on this device.");
       }
       appDir = externalDir;
