@@ -40,9 +40,11 @@ class _ExportDialogState extends State<ExportDialog> {
     try {
       String preview;
       if (_selectedFormat == 'time_log_csv') {
-        preview = await widget.exportService.generatePreviewText(widget.project, 'csv');
+        preview = await widget.exportService
+            .generatePreviewText(widget.project, 'csv');
       } else {
-        preview = await widget.exportService.generatePreviewText(widget.project, 'notes');
+        preview = await widget.exportService
+            .generatePreviewText(widget.project, 'notes');
       }
 
       setState(() {
@@ -157,7 +159,7 @@ class _ExportDialogState extends State<ExportDialog> {
 
       if (context.mounted) {
         Navigator.of(context).pop();
-        
+
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -211,13 +213,15 @@ class _ExportDialogState extends State<ExportDialog> {
       if (directory == null) return false;
 
       // Create exports subdirectory
-      final exportsDir = Directory(path.join(directory.path, 'ProjectTrackingExports'));
+      final exportsDir =
+          Directory(path.join(directory.path, 'ProjectTrackingExports'));
       if (!await exportsDir.exists()) {
         await exportsDir.create(recursive: true);
       }
 
       // Generate filename with timestamp and sanitize project name
-      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.')[0];
+      final timestamp =
+          DateTime.now().toIso8601String().replaceAll(':', '-').split('.')[0];
       final sanitizedName = _sanitizeFilename(widget.project.name);
       final filename = '${sanitizedName}_$timestamp.$extension';
       final filePath = path.join(exportsDir.path, filename);
@@ -237,7 +241,6 @@ class _ExportDialogState extends State<ExportDialog> {
   /// Sanitize filename by removing invalid characters
   String _sanitizeFilename(String filename) {
     // Remove or replace invalid filename characters: \ / : * ? " < > |
-    return filename
-        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
-        .trim();
+    return filename.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();
   }
+}
