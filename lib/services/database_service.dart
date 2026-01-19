@@ -13,6 +13,8 @@ abstract class DatabaseService {
   Future<List<Project>> getAllProjects();
   Future<Project?> getProject(int id);
   Future<void> updateProject(Project project);
+  Future<void> deleteProject(int id);
+  Future<void> renameProject(int id, String newName);
 
   // Instances
   Future<int> insertInstance(Instance instance);
