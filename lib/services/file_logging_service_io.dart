@@ -12,7 +12,28 @@ class FileLoggingService {
   String? _logDirectory;
 
   Future<void> initialize() async {
-    final appDir = await getApplicationDocumentsDirectory();
+    final Directory appDir;
+    
+    // Use platform-specific storage locations for better accessibility
+    if (Platform.isAndroid) {
+      // Android: Use external storage directory for user-accessible files
+      // This directory is accessible via file managers and "Files" app
+      final Directory? externalDir = await getExternalStorageDirectory();
+      if (externalDir == null) {
+        // Fail loudly if the user-accessible external storage is not available.
+        // Falling back to the internal directory would be confusing for users
+        // who expect to find the logs in a specific, accessible location.
+        throw FileSystemException(
+            "External storage directory not available on this device.");
+      }
+      appDir = externalDir;
+    } else {
+      // iOS, Windows, Linux, macOS: Use application documents directory
+      // iOS: Accessible via Files app with proper Info.plist configuration
+      // Desktop: Already accessible via system file explorer
+      appDir = await getApplicationDocumentsDirectory();
+    }
+    
     _logDirectory = path.join(appDir.path, 'ProjectTrackingLogs');
     await Directory(_logDirectory!).create(recursive: true);
   }

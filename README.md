@@ -179,10 +179,31 @@ flutter run -d ios
 
 ### Log Files Location
 
-- **All platforms**: User Documents directory under
-  `ProjectTrackingLogs/`
--- Example Windows Location: C:\Users\<user name>\OneDrive\Documents\ProjectTrackingLogs
--- Android Location: Android/data/com.example.project_tracking/files/ProjectTrackingLogs/
+Log files are stored in platform-specific user-accessible locations:
+
+- **Windows**: `C:\Users\<username>\Documents\ProjectTrackingLogs\`
+  - Easily accessible via File Explorer
+  
+- **Linux**: `~/Documents/ProjectTrackingLogs/`
+  - Accessible via file manager
+  
+- **Android**: External storage at `/storage/emulated/0/Android/data/com.example.project_tracking/files/ProjectTrackingLogs/`
+  - Accessible via file manager apps (e.g., Files by Google, Samsung My Files)
+  - Navigate to: Internal Storage → Android → data → com.example.project_tracking → files → ProjectTrackingLogs
+  - Files persist after app updates but are removed on app uninstall
+  
+- **iOS**: `<App Container>/Documents/ProjectTrackingLogs/`
+  - Accessible via Files app when file sharing is enabled
+  - To enable file sharing, add these keys to `ios/Runner/Info.plist`:
+
+    ```xml
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+    ```
+
+  - After enabling, logs can be accessed: Files app → On My iPhone → Project Tracking → ProjectTrackingLogs
 
 ## Testing
 
