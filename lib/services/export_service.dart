@@ -114,6 +114,7 @@ class ExportService {
     buffer.writeln('=' * 80);
     buffer.writeln();
 
+    int notesCount = 0;
     for (final instance in completedInstances) {
       if (instance.id == null) continue;
       
@@ -121,6 +122,7 @@ class ExportService {
       
       if (notes.isEmpty) continue; // Skip instances with no notes
       
+      notesCount += notes.length;
       buffer.writeln('Instance: ${dateTimeFormat.format(instance.startTime)} - ${dateTimeFormat.format(instance.endTime!)}');
       buffer.writeln('Duration: ${_formatDuration(instance.durationMinutes)}');
       buffer.writeln('-' * 80);
@@ -133,7 +135,7 @@ class ExportService {
       buffer.writeln();
     }
 
-    if (buffer.length == 0) {
+    if (notesCount == 0) {
       buffer.writeln('No notes found for this project.');
     }
 
