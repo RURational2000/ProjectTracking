@@ -215,9 +215,10 @@ class _ExportDialogState extends State<ExportDialog> {
         await exportsDir.create(recursive: true);
       }
 
-      // Generate filename with timestamp
+      // Generate filename with timestamp and sanitize project name
       final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.')[0];
-      final filename = '${widget.project.name}_$timestamp.$extension';
+      final sanitizedName = _sanitizeFilename(widget.project.name);
+      final filename = '${sanitizedName}_$timestamp.$extension';
       final filePath = path.join(exportsDir.path, filename);
 
       // Write file
@@ -231,4 +232,11 @@ class _ExportDialogState extends State<ExportDialog> {
       return false;
     }
   }
-}
+
+  /// Sanitize filename by removing invalid characters
+  String _sanitizeFilename(String filename) {
+    // Remove or replace invalid filename characters: \ / : * ? " < > |
+    return filename
+        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+        .trim();
+  }
