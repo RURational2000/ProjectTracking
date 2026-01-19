@@ -55,7 +55,7 @@ class FakeDatabaseService implements DatabaseService {
         .where((entry) => entry.value.projectId == id)
         .map((entry) => entry.key)
         .toList();
-    
+
     // Remove instances for this project
     for (final instanceId in instanceIdsToRemove) {
       _instances.remove(instanceId);

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:project_tracking/models/project.dart';
+import 'package:project_tracking/models/instance.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 import 'mocks/fake_database_service.dart';
 import 'mocks/fake_file_logging_service.dart';
@@ -161,7 +162,7 @@ void main() {
       final projectId = await dbService.insertProject(
         Project(name: 'Project with Instances'),
       );
-      
+
       await dbService.insertInstance(
         Instance(projectId: projectId),
       );
@@ -178,7 +179,8 @@ void main() {
       expect(deletedProject, null);
 
       // Instances should be cleaned up
-      final remainingInstances = await dbService.getInstancesForProject(projectId);
+      final remainingInstances =
+          await dbService.getInstancesForProject(projectId);
       expect(remainingInstances.length, 0);
     });
 
@@ -195,7 +197,7 @@ void main() {
 
     test('archived projects do not appear in getAllProjects', () async {
       // Create two projects
-      final project1Id = await dbService.insertProject(
+      await dbService.insertProject(
         Project(name: 'Active Project'),
       );
       final project2Id = await dbService.insertProject(

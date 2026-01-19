@@ -139,7 +139,8 @@ class ProjectList extends StatelessWidget {
                           children: [
                             Icon(Icons.delete, color: Colors.red),
                             SizedBox(width: 8),
-                            Text('Delete Permanently', style: TextStyle(color: Colors.red)),
+                            Text('Delete Permanently',
+                                style: TextStyle(color: Colors.red)),
                           ],
                         ),
                       ),
