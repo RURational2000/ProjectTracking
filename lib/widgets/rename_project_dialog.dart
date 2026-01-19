@@ -93,7 +93,10 @@ class _RenameProjectDialogState extends State<RenameProjectDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error renaming project: $e')),
       );
-      setState(() => _isLoading = false);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }
