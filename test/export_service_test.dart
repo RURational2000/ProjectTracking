@@ -25,7 +25,10 @@ void main() {
       // Export should work even with no instances
       final csv = await exportService.exportTimeLogAsCsv(project!);
 
-      expect(csv, contains('Date,Start Time,End Time,Duration (minutes),Duration (hours),Description,Week,Month'));
+      expect(
+          csv,
+          contains(
+              'Date,Start Time,End Time,Duration (minutes),Duration (hours),Description,Week,Month'));
       expect(csv, contains('Weekly Summaries'));
       expect(csv, contains('Monthly Summaries'));
     });
@@ -142,8 +145,16 @@ void main() {
 
       // Check that most recent date appears first in data
       final lines = csv.split('\n');
-      final dataLines = lines.skip(1).where((l) => l.isNotEmpty && !l.startsWith('Weekly') && !l.startsWith('Monthly') && !l.startsWith('Week,') && !l.startsWith('Month,')).toList();
-      
+      final dataLines = lines
+          .skip(1)
+          .where((l) =>
+              l.isNotEmpty &&
+              !l.startsWith('Weekly') &&
+              !l.startsWith('Monthly') &&
+              !l.startsWith('Week,') &&
+              !l.startsWith('Month,'))
+          .toList();
+
       if (dataLines.length >= 2) {
         expect(dataLines[0], contains('2024-01-15'));
         expect(dataLines[1], contains('2024-01-10'));
@@ -294,7 +305,8 @@ void main() {
       final project = await dbService.getProject(projectId);
 
       // Generate preview
-      final preview = await exportService.generatePreviewText(project!, 'notes');
+      final preview =
+          await exportService.generatePreviewText(project!, 'notes');
 
       expect(preview, contains('Notes Export for Project: Test Project'));
       expect(preview, isNotEmpty);
