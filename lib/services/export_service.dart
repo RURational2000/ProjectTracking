@@ -56,7 +56,7 @@ class ExportService {
       final durationMinutes = instance.durationMinutes;
       final durationHours = (durationMinutes / 60.0).toStringAsFixed(2);
       
-      // Get last note as description
+      // Get last note as description (notes are ordered by created_at ascending)
       final notes = instanceNotes[instance.id] ?? [];
       final description = notes.isNotEmpty ? _escapeCsv(notes.last.content) : '';
       
@@ -114,7 +114,7 @@ class ExportService {
     buffer.writeln('=' * 80);
     buffer.writeln();
 
-    int notesCount = 0;
+    int instancesWithNotes = 0;
     for (final instance in completedInstances) {
       if (instance.id == null) continue;
       
@@ -122,7 +122,7 @@ class ExportService {
       
       if (notes.isEmpty) continue; // Skip instances with no notes
       
-      notesCount += notes.length;
+      instancesWithNotes++;
       buffer.writeln('Instance: ${dateTimeFormat.format(instance.startTime)} - ${dateTimeFormat.format(instance.endTime!)}');
       buffer.writeln('Duration: ${_formatDuration(instance.durationMinutes)}');
       buffer.writeln('-' * 80);
@@ -135,7 +135,7 @@ class ExportService {
       buffer.writeln();
     }
 
-    if (notesCount == 0) {
+    if (instancesWithNotes == 0) {
       buffer.writeln('No notes found for this project.');
     }
 

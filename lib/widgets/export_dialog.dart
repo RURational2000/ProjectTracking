@@ -166,9 +166,12 @@ class _ExportDialogState extends State<ExportDialog> {
             ),
           );
         } else {
+          final message = kIsWeb
+              ? 'Export not supported on web platform. Please use desktop or mobile app.'
+              : 'Failed to export file';
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to export file'),
+            SnackBar(
+              content: Text(message),
               backgroundColor: Colors.red,
             ),
           );
@@ -190,9 +193,9 @@ class _ExportDialogState extends State<ExportDialog> {
   Future<bool> _saveFile(String content, String extension) async {
     try {
       if (kIsWeb) {
-        // Web platform: trigger download
-        // Note: This would require web-specific implementation
-        // For now, we'll skip web support as it's noted as demo-only
+        // Web platform: download functionality not implemented
+        // Show specific message to user
+        debugPrint('Export not supported on web platform');
         return false;
       }
 

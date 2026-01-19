@@ -96,24 +96,20 @@ class ProjectList extends StatelessWidget {
           ),
         ),
         subtitle: Text(_formatTime(minutes, provider.timeDisplayMode)),
-        trailing: isActive
-            ? IconButton(
-                icon: const Icon(Icons.download),
-                onPressed: () => _showExportDialog(context, provider, project),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.download),
-                    onPressed: () => _showExportDialog(context, provider, project),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.play_circle_outline),
-                    onPressed: () => _startProject(context, provider, project),
-                  ),
-                ],
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: () => _showExportDialog(context, provider, project),
+            ),
+            if (!isActive)
+              IconButton(
+                icon: const Icon(Icons.play_circle_outline),
+                onPressed: () => _startProject(context, provider, project),
               ),
+          ],
+        ),
         onTap:
             isActive ? null : () => _startProject(context, provider, project),
       ),
