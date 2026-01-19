@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:project_tracking/models/time_display_mode.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 import 'package:project_tracking/models/project.dart';
+import 'package:project_tracking/widgets/rename_project_dialog.dart';
 
 class ProjectList extends StatelessWidget {
   const ProjectList({super.key});
@@ -96,9 +97,56 @@ class ProjectList extends StatelessWidget {
         subtitle: Text(_formatTime(minutes, provider.timeDisplayMode)),
         trailing: isActive
             ? null
-            : IconButton(
-                icon: const Icon(Icons.play_circle_outline),
-                onPressed: () => _startProject(context, provider, project),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.play_circle_outline),
+                    onPressed: () => _startProject(context, provider, project),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) => _handleMenuAction(
+                      context,
+                      provider,
+                      project,
+                      value,
+                    ),
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'rename',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit),
+                            SizedBox(width: 8),
+                            Text('Rename'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'archive',
+                        child: Row(
+                          children: [
+                            Icon(Icons.archive),
+                            SizedBox(width: 8),
+                            Text('Archive'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete Permanently',
+                                style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
         onTap:
             isActive ? null : () => _startProject(context, provider, project),
@@ -116,6 +164,133 @@ class ProjectList extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Started tracking: ${project.name}')),
       );
+    }
+  }
+
+  Future<void> _handleMenuAction(
+    BuildContext context,
+    TrackingProvider provider,
+    Project project,
+    String action,
+  ) async {
+    switch (action) {
+      case 'rename':
+        await _showRenameDialog(context, provider, project);
+        break;
+      case 'archive':
+        await _confirmAndArchive(context, provider, project);
+        break;
+      case 'delete':
+        await _confirmAndDelete(context, provider, project);
+        break;
+    }
+  }
+
+  Future<void> _showRenameDialog(
+    BuildContext context,
+    TrackingProvider provider,
+    Project project,
+  ) async {
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => RenameProjectDialog(
+        project: project,
+        provider: provider,
+      ),
+    );
+  }
+
+  Future<void> _confirmAndArchive(
+    BuildContext context,
+    TrackingProvider provider,
+    Project project,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Archive Project'),
+        content: Text(
+          'Archive "${project.name}"?\n\n'
+          'The project will be hidden from the list but can be restored later. '
+          'All data and logs will be preserved.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Archive'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await provider.archiveProject(project);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Archived: ${project.name}')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error archiving project: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _confirmAndDelete(
+    BuildContext context,
+    TrackingProvider provider,
+    Project project,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Project Permanently'),
+        content: Text(
+          'Permanently delete "${project.name}"?\n\n'
+          'This will remove all project data from the database including all instances and notes. '
+          'This action cannot be undone.\n\n'
+          'Note: Text log files will NOT be deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await provider.deleteProject(project);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Deleted: ${project.name}')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error deleting project: $e')),
+          );
+        }
+      }
     }
   }
 }
