@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:project_tracking/models/time_display_mode.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 import 'package:project_tracking/models/project.dart';
+import 'package:project_tracking/services/export_service.dart';
+import 'package:project_tracking/widgets/export_dialog.dart';
 
 class ProjectList extends StatelessWidget {
   const ProjectList({super.key});
@@ -95,10 +97,22 @@ class ProjectList extends StatelessWidget {
         ),
         subtitle: Text(_formatTime(minutes, provider.timeDisplayMode)),
         trailing: isActive
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.play_circle_outline),
-                onPressed: () => _startProject(context, provider, project),
+            ? IconButton(
+                icon: const Icon(Icons.download),
+                onPressed: () => _showExportDialog(context, provider, project),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.download),
+                    onPressed: () => _showExportDialog(context, provider, project),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.play_circle_outline),
+                    onPressed: () => _startProject(context, provider, project),
+                  ),
+                ],
               ),
         onTap:
             isActive ? null : () => _startProject(context, provider, project),
@@ -117,5 +131,20 @@ class ProjectList extends StatelessWidget {
         SnackBar(content: Text('Started tracking: ${project.name}')),
       );
     }
+  }
+
+  void _showExportDialog(
+    BuildContext context,
+    TrackingProvider provider,
+    Project project,
+  ) {
+    final exportService = ExportService(dbService: provider.dbService);
+    showDialog(
+      context: context,
+      builder: (context) => ExportDialog(
+        project: project,
+        exportService: exportService,
+      ),
+    );
   }
 }
