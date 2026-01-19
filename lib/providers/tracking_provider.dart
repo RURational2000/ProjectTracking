@@ -55,6 +55,51 @@ class TrackingProvider with ChangeNotifier {
     await loadProjects();
   }
 
+  /// Archive a project (marks as archived, won't appear in list)
+  Future<void> archiveProject(Project project) async {
+    if (project.id == null) return;
+
+    // End active instance if this project is currently active
+    if (_activeProject?.id == project.id && _activeInstance != null) {
+      await endCurrentInstance();
+    }
+
+    // Mark project as archived
+    final archivedProject = project.copyWith(isArchived: true);
+    await dbService.updateProject(archivedProject);
+    await loadProjects();
+  }
+
+  /// Permanently delete a project from database
+  /// Note: Text log files are NOT deleted
+  Future<void> deleteProject(Project project) async {
+    if (project.id == null) return;
+
+    // End active instance if this project is currently active
+    if (_activeProject?.id == project.id && _activeInstance != null) {
+      await endCurrentInstance();
+    }
+
+    // Permanently delete from database
+    await dbService.deleteProject(project.id!);
+    await loadProjects();
+  }
+
+  /// Rename a project
+  Future<void> renameProject(Project project, String newName) async {
+    if (project.id == null || newName.trim().isEmpty) return;
+
+    // Update in database
+    await dbService.renameProject(project.id!, newName);
+
+    // Update local reference if this is the active project
+    if (_activeProject?.id == project.id) {
+      _activeProject = _activeProject!.copyWith(name: newName.trim());
+    }
+
+    await loadProjects();
+  }
+
   /// Start tracking a project - ends previous instance automatically
   Future<void> startProject(Project project) async {
     // End current instance if exists

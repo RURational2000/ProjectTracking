@@ -27,7 +27,7 @@ class FakeDatabaseService implements DatabaseService {
 
   @override
   Future<List<Project>> getAllProjects() async {
-    final list = _projects.values.toList();
+    final list = _projects.values.where((p) => !p.isArchived).toList();
     list.sort((a, b) {
       final la = a.lastActiveAt ?? a.createdAt;
       final lb = b.lastActiveAt ?? b.createdAt;
@@ -45,6 +45,28 @@ class FakeDatabaseService implements DatabaseService {
   Future<void> updateProject(Project project) async {
     if (project.id == null) throw ArgumentError('Project ID required');
     _projects[project.id!] = project;
+  }
+
+  @override
+  Future<void> deleteProject(int id) async {
+    _projects.remove(id);
+    // Also remove related instances
+    _instances.removeWhere((key, instance) => instance.projectId == id);
+    // Remove notes for deleted instances
+    final deletedInstances = _instances.keys.where((k) => !_instances.containsKey(k)).toList();
+    for (final instanceId in deletedInstances) {
+      _instanceNotes.remove(instanceId);
+    }
+  }
+
+  @override
+  Future<void> renameProject(int id, String newName) async {
+    if (newName.trim().isEmpty) {
+      throw ArgumentError('Project name cannot be empty');
+    }
+    final project = _projects[id];
+    if (project == null) throw ArgumentError('Project not found');
+    _projects[id] = project.copyWith(name: newName.trim());
   }
 
   @override

@@ -125,6 +125,44 @@ class SupabaseDatabaseService implements DatabaseService {
     }
   }
 
+  @override
+  Future<void> deleteProject(int id) async {
+    final userId = _currentUserIdOrThrow();
+
+    try {
+      // Permanently delete the project and all related instances/notes
+      // (CASCADE delete is handled by the database)
+      await _client
+          .from('projects')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('Error deleting project: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> renameProject(int id, String newName) async {
+    final userId = _currentUserIdOrThrow();
+
+    if (newName.trim().isEmpty) {
+      throw ArgumentError('Project name cannot be empty');
+    }
+
+    try {
+      await _client
+          .from('projects')
+          .update({'name': newName.trim()})
+          .eq('id', id)
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('Error renaming project: $e');
+      rethrow;
+    }
+  }
+
   // Instance operations
   @override
   Future<int> insertInstance(Instance instance) async {
