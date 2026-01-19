@@ -1,6 +1,5 @@
 import 'package:intl/intl.dart';
 import 'package:project_tracking/models/project.dart';
-import 'package:project_tracking/models/instance.dart';
 import 'package:project_tracking/models/note.dart';
 import 'package:project_tracking/services/database_service.dart';
 
@@ -19,10 +18,11 @@ class ExportService {
 
     // Fetch all instances for the project
     final instances = await dbService.getInstancesForProject(project.id!);
-    
+
     // Filter out instances without end time (active instances)
-    final completedInstances = instances.where((i) => i.endTime != null).toList();
-    
+    final completedInstances =
+        instances.where((i) => i.endTime != null).toList();
+
     // Sort by start time descending (most recent first)
     completedInstances.sort((a, b) => b.startTime.compareTo(a.startTime));
 
@@ -30,64 +30,71 @@ class ExportService {
     final Map<int, List<Note>> instanceNotes = {};
     for (final instance in completedInstances) {
       if (instance.id != null) {
-        instanceNotes[instance.id!] = await dbService.getNotesForInstance(instance.id!);
+        instanceNotes[instance.id!] =
+            await dbService.getNotesForInstance(instance.id!);
       }
     }
 
     // Build CSV
     final buffer = StringBuffer();
-    
+
     // Header
-    buffer.writeln('Date,Start Time,End Time,Duration (minutes),Duration (hours),Description,Week,Month');
-    
+    buffer.writeln(
+        'Date,Start Time,End Time,Duration (minutes),Duration (hours),Description,Week,Month');
+
     // Track summaries
     final Map<String, int> weeklySummaries = {};
     final Map<String, int> monthlySummaries = {};
-    
+
     final dateFormat = DateFormat('yyyy-MM-dd');
     final timeFormat = DateFormat('HH:mm');
     final weekFormat = DateFormat('yyyy-ww'); // ISO week number
     final monthFormat = DateFormat('yyyy-MM');
-    
+
     for (final instance in completedInstances) {
       final date = dateFormat.format(instance.startTime);
       final startTime = timeFormat.format(instance.startTime);
       final endTime = timeFormat.format(instance.endTime!);
       final durationMinutes = instance.durationMinutes;
       final durationHours = (durationMinutes / 60.0).toStringAsFixed(2);
-      
+
       // Get last note as description (notes are ordered by created_at ascending)
       final notes = instanceNotes[instance.id] ?? [];
-      final description = notes.isNotEmpty ? _escapeCsv(notes.last.content) : '';
-      
+      final description =
+          notes.isNotEmpty ? _escapeCsv(notes.last.content) : '';
+
       // Calculate week and month
       final week = weekFormat.format(instance.startTime);
       final month = monthFormat.format(instance.startTime);
-      
+
       // Add to summaries
       weeklySummaries[week] = (weeklySummaries[week] ?? 0) + durationMinutes;
-      monthlySummaries[month] = (monthlySummaries[month] ?? 0) + durationMinutes;
-      
-      buffer.writeln('$date,$startTime,$endTime,$durationMinutes,$durationHours,"$description",$week,$month');
+      monthlySummaries[month] =
+          (monthlySummaries[month] ?? 0) + durationMinutes;
+
+      buffer.writeln(
+          '$date,$startTime,$endTime,$durationMinutes,$durationHours,"$description",$week,$month');
     }
-    
+
     // Add summary sections
     buffer.writeln();
     buffer.writeln('Weekly Summaries');
     buffer.writeln('Week,Total Minutes,Total Hours');
-    for (final entry in weeklySummaries.entries.toList()..sort((a, b) => b.key.compareTo(a.key))) {
+    for (final entry in weeklySummaries.entries.toList()
+      ..sort((a, b) => b.key.compareTo(a.key))) {
       final hours = (entry.value / 60.0).toStringAsFixed(2);
       buffer.writeln('${entry.key},${entry.value},$hours');
     }
-    
+
     buffer.writeln();
     buffer.writeln('Monthly Summaries');
     buffer.writeln('Month,Total Minutes,Total Hours');
-    for (final entry in monthlySummaries.entries.toList()..sort((a, b) => b.key.compareTo(a.key))) {
+    for (final entry in monthlySummaries.entries.toList()
+      ..sort((a, b) => b.key.compareTo(a.key))) {
       final hours = (entry.value / 60.0).toStringAsFixed(2);
       buffer.writeln('${entry.key},${entry.value},$hours');
     }
-    
+
     return buffer.toString();
   }
 
@@ -100,15 +107,16 @@ class ExportService {
 
     // Fetch all instances for the project
     final instances = await dbService.getInstancesForProject(project.id!);
-    
+
     // Filter completed instances and sort descending
-    final completedInstances = instances.where((i) => i.endTime != null).toList();
+    final completedInstances =
+        instances.where((i) => i.endTime != null).toList();
     completedInstances.sort((a, b) => b.startTime.compareTo(a.startTime));
 
     // Build text output
     final buffer = StringBuffer();
     final dateTimeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
-    
+
     buffer.writeln('Notes Export for Project: ${project.name}');
     buffer.writeln('Generated: ${dateTimeFormat.format(DateTime.now())}');
     buffer.writeln('=' * 80);
@@ -117,21 +125,22 @@ class ExportService {
     int instancesWithNotes = 0;
     for (final instance in completedInstances) {
       if (instance.id == null) continue;
-      
+
       final notes = await dbService.getNotesForInstance(instance.id!);
-      
+
       if (notes.isEmpty) continue; // Skip instances with no notes
-      
+
       instancesWithNotes++;
-      buffer.writeln('Instance: ${dateTimeFormat.format(instance.startTime)} - ${dateTimeFormat.format(instance.endTime!)}');
+      buffer.writeln(
+          'Instance: ${dateTimeFormat.format(instance.startTime)} - ${dateTimeFormat.format(instance.endTime!)}');
       buffer.writeln('Duration: ${_formatDuration(instance.durationMinutes)}');
       buffer.writeln('-' * 80);
-      
+
       for (final note in notes) {
         final noteTime = DateFormat('HH:mm:ss').format(note.createdAt);
         buffer.writeln('[$noteTime] ${note.content}');
       }
-      
+
       buffer.writeln();
     }
 
@@ -155,7 +164,10 @@ class ExportService {
   /// Escape CSV special characters
   String _escapeCsv(String value) {
     // Replace quotes with double quotes and handle newlines
-    return value.replaceAll('"', '""').replaceAll('\n', ' ').replaceAll('\r', '');
+    return value
+        .replaceAll('"', '""')
+        .replaceAll('\n', ' ')
+        .replaceAll('\r', '');
   }
 
   /// Generate preview text for export dialog
