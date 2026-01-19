@@ -19,7 +19,14 @@ class FileLoggingService {
       // Android: Use external storage directory for user-accessible files
       // This directory is accessible via file managers and "Files" app
       final Directory? externalDir = await getExternalStorageDirectory();
-      appDir = externalDir ?? await getApplicationDocumentsDirectory();
+      if (externalDir == null) {
+        // Fail loudly if the user-accessible external storage is not available.
+        // Falling back to the internal directory would be confusing for users
+        // who expect to find the logs in a specific, accessible location.
+        throw FileSystemException(
+            "External storage directory not available on this device.");
+      }
+      appDir = externalDir;
     } else {
       // iOS, Windows, Linux, macOS: Use application documents directory
       // iOS: Accessible via Files app with proper Info.plist configuration
