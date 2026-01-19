@@ -162,8 +162,7 @@ void main() {
         Project(name: 'Project with Instances'),
       );
       
-      final project = await dbService.getProject(projectId);
-      final instanceId = await dbService.insertInstance(
+      await dbService.insertInstance(
         Instance(projectId: projectId),
       );
 
