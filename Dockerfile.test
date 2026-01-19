@@ -1,0 +1,9 @@
+FROM google/dart:latest
+
+WORKDIR /app
+COPY pubspec.yaml .
+COPY lib/ lib/
+COPY test/ test/
+
+RUN dart pub upgrade
+RUN dart test

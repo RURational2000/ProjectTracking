@@ -148,6 +148,8 @@ class ProjectList extends StatelessWidget {
                   ),
                 ],
               ),
+          ],
+        ),
         onTap:
             isActive ? null : () => _startProject(context, provider, project),
       ),

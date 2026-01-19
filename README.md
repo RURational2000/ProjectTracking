@@ -15,6 +15,8 @@ text editor) independent of the app.
 - **Time Display Modes**: View project time as current instance, daily, weekly,
   monthly, or complete totals.
 - **Multiple Notes**: Add multiple notes per instance, saved only when non-empty.
+- **Export Capability**: Export project time logs and notes in CSV or text format
+  with preview before saving.
 - **Cloud Storage**: Supabase-powered PostgreSQL database with real-time synchronization.
 - **Multi-User Support**: Individual user identification with Row-Level Security.
 - **Dual Storage**: Cloud database for querying + text file logs for local
@@ -64,6 +66,50 @@ app bar) that allows you to view project time in different contexts:
 3. The selected mode is indicated with a checkmark (✓)
 4. Project times update automatically to reflect the selected view
 5. Mode selection persists in memory until the app is restarted
+
+### Export Capability
+
+The app provides comprehensive export functionality for project data, allowing you to extract time logs and notes for analysis, reporting, or archival purposes.
+
+#### Export Formats
+
+1. **Time Log (CSV)**
+   - One line per instance in descending chronological order (most recent first)
+   - Columns: Date, Start Time, End Time, Duration (minutes), Duration (hours), Description, Week, Month
+   - Description field contains the last note from each instance
+   - Includes weekly summaries section (total minutes and hours per week)
+   - Includes monthly summaries section (total minutes and hours per month)
+   - Compatible with Excel, Google Sheets, and other spreadsheet applications
+
+2. **Notes (Text)**
+   - All notes grouped by instance
+   - Instances displayed in descending chronological order
+   - Each instance shows: date/time range, duration, and all associated notes
+   - Notes include timestamps for when they were created
+   - Human-readable format ideal for review and documentation
+
+#### How to Export
+
+1. Locate the project you want to export in the project list
+2. Click the download icon (📥) next to the project name
+3. In the export dialog:
+   - Select your desired export format (Time Log CSV or Notes Text)
+   - Review the preview to ensure data is correct
+   - Click "Export" to save the file
+4. Files are saved to the `ProjectTrackingExports` directory:
+   - **Windows**: `C:\Users\<username>\Documents\ProjectTrackingExports\`
+   - **Linux**: `~/Documents/ProjectTrackingExports/`
+   - **Android**: `/storage/emulated/0/Android/data/com.example.project_tracking/files/ProjectTrackingExports/`
+   - **iOS**: `<App Container>/Documents/ProjectTrackingExports/`
+5. Filenames include the project name and timestamp: `ProjectName_2024-01-15T10-30-00.csv`
+
+#### Use Cases
+
+- **Client Billing**: Export time logs to calculate billable hours
+- **Project Analysis**: Analyze time spent across different periods
+- **Record Keeping**: Archive project data for future reference
+- **Reporting**: Import into spreadsheets for custom reports and visualizations
+- **Documentation**: Export notes for project documentation or handoffs
 
 ## Architecture
 
