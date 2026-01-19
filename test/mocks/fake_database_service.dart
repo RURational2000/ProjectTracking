@@ -50,11 +50,15 @@ class FakeDatabaseService implements DatabaseService {
   @override
   Future<void> deleteProject(int id) async {
     _projects.remove(id);
-    // Also remove related instances
-    _instances.removeWhere((key, instance) => instance.projectId == id);
-    // Remove notes for deleted instances
-    final deletedInstances = _instances.keys.where((k) => !_instances.containsKey(k)).toList();
-    for (final instanceId in deletedInstances) {
+    // Collect instance IDs for this project before removing instances
+    final instanceIdsToRemove = _instances.entries
+        .where((entry) => entry.value.projectId == id)
+        .map((entry) => entry.key)
+        .toList();
+    
+    // Remove instances for this project
+    for (final instanceId in instanceIdsToRemove) {
+      _instances.remove(instanceId);
       _instanceNotes.remove(instanceId);
     }
   }

@@ -186,13 +186,9 @@ class ProjectList extends StatelessWidget {
   }
 
   Future<void> _showRenameDialog(BuildContext context, Project project) async {
-    final provider = Provider.of<TrackingProvider>(context, listen: false);
     await showDialog(
       context: context,
-      builder: (context) => ChangeNotifierProvider<TrackingProvider>.value(
-        value: provider,
-        child: RenameProjectDialog(project: project),
-      ),
+      builder: (context) => RenameProjectDialog(project: project),
     );
   }
 
