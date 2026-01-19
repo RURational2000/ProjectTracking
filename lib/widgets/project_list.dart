@@ -175,7 +175,7 @@ class ProjectList extends StatelessWidget {
   ) async {
     switch (action) {
       case 'rename':
-        await _showRenameDialog(context, project);
+        await _showRenameDialog(context, provider, project);
         break;
       case 'archive':
         await _confirmAndArchive(context, provider, project);
@@ -186,10 +186,17 @@ class ProjectList extends StatelessWidget {
     }
   }
 
-  Future<void> _showRenameDialog(BuildContext context, Project project) async {
+  Future<void> _showRenameDialog(
+    BuildContext context,
+    TrackingProvider provider,
+    Project project,
+  ) async {
     await showDialog(
       context: context,
-      builder: (context) => RenameProjectDialog(project: project),
+      builder: (dialogContext) => RenameProjectDialog(
+        project: project,
+        provider: provider,
+      ),
     );
   }
 

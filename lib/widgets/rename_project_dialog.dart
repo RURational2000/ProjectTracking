@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:project_tracking/models/project.dart';
 import 'package:project_tracking/providers/tracking_provider.dart';
 
 class RenameProjectDialog extends StatefulWidget {
   final Project project;
+  final TrackingProvider provider;
 
-  const RenameProjectDialog({required this.project, super.key});
+  const RenameProjectDialog({
+    required this.project,
+    required this.provider,
+    super.key,
+  });
 
   @override
   State<RenameProjectDialog> createState() => _RenameProjectDialogState();
@@ -77,8 +81,7 @@ class _RenameProjectDialogState extends State<RenameProjectDialog> {
     setState(() => _isLoading = true);
 
     try {
-      final provider = Provider.of<TrackingProvider>(context, listen: false);
-      await provider.renameProject(widget.project, name);
+      await widget.provider.renameProject(widget.project, name);
 
       if (!mounted) return;
       Navigator.of(context).pop();
