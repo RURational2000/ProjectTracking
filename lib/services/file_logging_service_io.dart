@@ -82,7 +82,7 @@ Instance ID: ${instance.id}
 
     if (notes.isNotEmpty) {
       buffer.writeln('\nNOTES (${notes.length}):');
-      for (int i = 0; i < notes.length; i++) {
+      for (int i = notes.length - 1; i >= 0; i--) {
         final noteTime = DateFormat('HH:mm:ss').format(notes[i].createdAt);
         buffer.writeln('  [$noteTime] ${notes[i].content}');
       }

@@ -178,7 +178,7 @@ class TrackingProvider with ChangeNotifier {
 
     final noteId = await dbService.insertNote(note);
     final savedNote = note.copyWith(id: noteId);
-    _currentNotes.add(savedNote);
+    _currentNotes.insert(0, savedNote);
 
     // Log note to file
     await fileService.logNote(_activeProject!, _activeInstance!, savedNote);
