@@ -113,15 +113,6 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                // Display existing notes
-                if (provider.currentNotes.isNotEmpty)
-                  ...provider.currentNotes.map(
-                    (note) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text('• ${note.content}'),
-                    ),
-                  ),
-                const SizedBox(height: 8),
                 // Add note input
                 Row(
                   children: [
@@ -144,6 +135,15 @@ class _ActiveTrackingPanelState extends State<ActiveTrackingPanel> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                // Display existing notes
+                if (provider.currentNotes.isNotEmpty)
+                  ...provider.currentNotes.map(
+                    (note) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text('• ${note.content}'),
+                    ),
+                  ),
               ],
             ),
           ),
