@@ -77,9 +77,12 @@ app bar) that allows you to view project time in different contexts:
 ### Storage Strategy
 
 1. **Supabase (PostgreSQL)** (`DatabaseService`): Cloud-based primary storage for structured
-   queries, relationships, and multi-user support with real-time synchronization
-2. **Text File Logs** (`FileLoggingService`): Human-readable audit trail
-   per project (local device storage)
+   queries, relationships, and multi-user support with real-time synchronization.
+2. **Text File Logs** (`FileLoggingService`): Human-readable audit trail stored in
+   platform-specific local directories (e.g., app documents on Windows/Linux, external
+   storage on Android). One file per project (`{ProjectName}_log.txt`), written in parallel
+   with every database operation. Files can be read or supplemented via any text editor,
+   but manual edits are not synced back to the database.
 
 ### Key Behaviors
 
