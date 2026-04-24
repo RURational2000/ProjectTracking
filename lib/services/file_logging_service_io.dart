@@ -54,7 +54,7 @@ Instance ID: ${instance.id}
 ================================================================================
 
 ''';
-    await _appendToLog(project.name, content);
+    await _appendToLog(project, content);
   }
 
   /// Logs instance end event with duration
@@ -92,7 +92,7 @@ Instance ID: ${instance.id}
       '================================================================================\n',
     );
 
-    await _appendToLog(project.name, buffer.toString());
+    await _appendToLog(project, buffer.toString());
   }
 
   /// Logs a note addition
@@ -106,15 +106,16 @@ Content: ${note.content}
 --------------------------------------------------------------------------------
 
 ''';
-    await _appendToLog(project.name, content);
+    await _appendToLog(project, content);
   }
 
   /// Appends content to project-specific log file
-  Future<void> _appendToLog(String projectName, String content) async {
+  Future<void> _appendToLog(Project project, String content) async {
     // Sanitize project name for filename
     final sanitized =
-        projectName.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
-    final filename = '${sanitized}_log.txt';
+        project.name.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+    final projectId = project.id ?? 'unknown';
+    final filename = '${sanitized}_log-ID$projectId.txt';
     final file = File(path.join(_logDirectory!, filename));
 
     await file.writeAsString(content, mode: FileMode.append);

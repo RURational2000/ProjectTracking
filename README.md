@@ -80,7 +80,7 @@ app bar) that allows you to view project time in different contexts:
    queries, relationships, and multi-user support with real-time synchronization.
 2. **Text File Logs** (`FileLoggingService`): Human-readable audit trail stored in
    platform-specific local directories (e.g., app documents on Windows/Linux, external
-   storage on Android). One file per project (`{ProjectName}_log.txt`), written in parallel
+   storage on Android). One file per project (`{ProjectName}_log-ID{Project ID}.txt`), written in parallel
    with every database operation. Files can be read or supplemented via any text editor,
    but manual edits are not synced back to the database.
 
@@ -89,7 +89,7 @@ app bar) that allows you to view project time in different contexts:
 - Starting a new project automatically ends the previous active instance
 - Notes are validated (non-empty) before saving to database and log files
 - Time is accumulated at the project level from completed instances
-- Each project gets its own log file: `{ProjectName}_log.txt`
+- Each project gets its own log file: `{ProjectName}_log-ID{Project ID}.txt`
 
 ### Time Display Implementation
 
