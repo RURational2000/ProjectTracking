@@ -45,16 +45,17 @@ class FileLoggingService {
     final timestamp = DateFormat(
       'yyyy-MM-dd HH:mm:ss',
     ).format(instance.startTime);
-    final content = '''
-================================================================================
-PROJECT: ${project.name} (ID: ${project.id})
-INSTANCE START
-Started: $timestamp
-Instance ID: ${instance.id}
-================================================================================
 
+    // Adjust the number of '=' characters to maintain 70 characters.
+    final baseCharacterQuantity = timestamp.length + instance.id.toString().length + 28;
+    var endingEquals = '=';
+    if (baseCharacterQuantity < 70) {
+      endingEquals = '=' * (70 - baseCharacterQuantity);
+    }
+    final content = '''
+==START-^: $timestamp Instance ID: ${instance.id} -^$endingEquals
 ''';
-    await _appendToLog(project, content);
+    await _addToLog(project, content, insert: true);
   }
 
   /// Logs instance end event with duration
@@ -65,58 +66,51 @@ Instance ID: ${instance.id}
   ) async {
     if (instance.endTime == null) return;
 
-    final startFormat = DateFormat(
-      'yyyy-MM-dd HH:mm:ss',
-    ).format(instance.startTime);
     final endFormat = DateFormat(
       'yyyy-MM-dd HH:mm:ss',
     ).format(instance.endTime!);
     final duration = _formatDuration(instance.durationMinutes);
 
-    final buffer = StringBuffer();
-    buffer.writeln('INSTANCE END');
-    buffer.writeln('Started:  $startFormat');
-    buffer.writeln('Ended:    $endFormat');
-    buffer.writeln('Duration: $duration');
-    buffer.writeln('Instance ID: ${instance.id}');
-
-    if (notes.isNotEmpty) {
-      buffer.writeln('\nNOTES (${notes.length}):');
-      for (int i = notes.length - 1; i >= 0; i--) {
-        final noteTime = DateFormat('HH:mm:ss').format(notes[i].createdAt);
-        buffer.writeln('  [$noteTime] ${notes[i].content}');
-      }
+    // Adjust the number of '=' characters to maintain 70 characters.
+    final baseCharacterQuantity = endFormat.length + instance.id.toString().length + duration.length + 30;
+    var endingEquals = '=';
+    if (baseCharacterQuantity < 70) {
+      endingEquals = '=' * (70 - baseCharacterQuantity);
     }
+    final content = '''
+====END-v: $endFormat Instance ID: ${instance.id}, $duration -v$endingEquals
+''';
 
-    buffer.writeln(
-      '================================================================================\n',
-    );
-
-    await _appendToLog(project, buffer.toString());
+    await _addToLog(project, content, insert: true);
   }
 
   /// Logs a note addition
   Future<void> logNote(Project project, Instance instance, Note note) async {
-    final timestamp = DateFormat('yyyy-MM-dd HH:mm:ss').format(note.createdAt);
+    final timestamp = DateFormat('h:mma M/d/yyyy EEEE').format(note.createdAt);
     final content = '''
-NOTE ADDED
-Time: $timestamp
-Instance ID: ${instance.id}
-Content: ${note.content}
---------------------------------------------------------------------------------
-
+[$timestamp, Note ID: ${note.id}]
+${note.content}
 ''';
-    await _appendToLog(project, content);
+    await _addToLog(project, content, insert: true);
   }
 
-  /// Appends content to project-specific log file
-  Future<void> _appendToLog(Project project, String content) async {
+  /// Adds formatted content to project-specific log file
+  Future<void> _addToLog(Project project, String content, {bool insert = false}) async {
     // Sanitize project name for filename
     final sanitized =
         project.name.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
     final projectId = project.id ?? 'unknown';
     final filename = '${sanitized}_log-ID$projectId.txt';
     final file = File(path.join(_logDirectory!, filename));
+
+    /// Insert or append content to the log file. 
+    /// If insert is true, the new content is added at the top of the file, otherwise it is appended to the end.
+    if (insert && await file.exists()) {
+      final existingContent = await file.readAsString();
+      content = '$content\n$existingContent';
+      await file.writeAsString(content);
+      return;
+    }
 
     await file.writeAsString(content, mode: FileMode.append);
   }
