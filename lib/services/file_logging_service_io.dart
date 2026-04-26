@@ -47,7 +47,8 @@ class FileLoggingService {
     ).format(instance.startTime);
 
     // Adjust the number of '=' characters to maintain 70 characters.
-    final baseCharacterQuantity = timestamp.length + instance.id.toString().length + 28;
+    final baseCharacterQuantity =
+        timestamp.length + instance.id.toString().length + 28;
     var endingEquals = '=';
     if (baseCharacterQuantity < 70) {
       endingEquals = '=' * (70 - baseCharacterQuantity);
@@ -72,7 +73,8 @@ class FileLoggingService {
     final duration = _formatDuration(instance.durationMinutes);
 
     // Adjust the number of '=' characters to maintain 70 characters.
-    final baseCharacterQuantity = endFormat.length + instance.id.toString().length + duration.length + 30;
+    final baseCharacterQuantity =
+        endFormat.length + instance.id.toString().length + duration.length + 30;
     var endingEquals = '=';
     if (baseCharacterQuantity < 70) {
       endingEquals = '=' * (70 - baseCharacterQuantity);
@@ -95,7 +97,8 @@ ${note.content}
   }
 
   /// Adds formatted content to project-specific log file
-  Future<void> _addToLog(Project project, String content, {bool insert = false}) async {
+  Future<void> _addToLog(Project project, String content,
+      {bool insert = false}) async {
     // Sanitize project name for filename
     final sanitized =
         project.name.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
@@ -103,7 +106,7 @@ ${note.content}
     final filename = '${sanitized}_log-ID$projectId.txt';
     final file = File(path.join(_logDirectory!, filename));
 
-    /// Insert or append content to the log file. 
+    /// Insert or append content to the log file.
     /// If insert is true, the new content is added at the top of the file, otherwise it is appended to the end.
     if (insert && await file.exists()) {
       final existingContent = await file.readAsString();
