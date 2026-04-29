@@ -296,7 +296,7 @@ class SupabaseDatabaseService implements DatabaseService {
           .from('notes')
           .select()
           .eq('instance_id', instanceId)
-          .order('created_at', ascending: true);
+          .order('created_at', ascending: false);
 
       return (response as List).map((data) => _noteFromSupabase(data)).toList();
     } catch (e) {
