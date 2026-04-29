@@ -9,7 +9,8 @@ text editor) independent of the app.
 
 - **Project Management**: Create and select projects to track time spent.
   Projects may also be regular blocks of time such as 'Morning Chores' or
-  'Catch Up on Emails'. Projects may be renamed or deleted.
+  'Catch Up on Emails'. 
+  Projects may be renamed or deleted. If renamed,then a new text file is created with the new name.  If deleted, the associated text file remains.
 - **Instance Tracking**: Start/stop work sessions (instances) with automatic
   time accumulation.
 - **Time Display Modes**: View project time as current instance, daily, weekly,
@@ -77,16 +78,19 @@ app bar) that allows you to view project time in different contexts:
 ### Storage Strategy
 
 1. **Supabase (PostgreSQL)** (`DatabaseService`): Cloud-based primary storage for structured
-   queries, relationships, and multi-user support with real-time synchronization
-2. **Text File Logs** (`FileLoggingService`): Human-readable audit trail
-   per project (local device storage)
+   queries, relationships, and multi-user support with real-time synchronization.
+2. **Text File Logs** (`FileLoggingService`): Human-readable audit trail stored in
+   platform-specific local directories (e.g., app documents on Windows/Linux, external
+   storage on Android). One file per project (`{ProjectName}_log-ID{Project ID}.txt`), written in parallel
+   with every database operation. Files can be read or supplemented via any text editor,
+   but manual edits are not synced back to the database.
 
 ### Key Behaviors
 
 - Starting a new project automatically ends the previous active instance
 - Notes are validated (non-empty) before saving to database and log files
 - Time is accumulated at the project level from completed instances
-- Each project gets its own log file: `{ProjectName}_log.txt`
+- Each project gets its own log file: `{ProjectName}_log-ID{Project ID}.txt`
 
 ### Time Display Implementation
 
