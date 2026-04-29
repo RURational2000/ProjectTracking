@@ -75,7 +75,8 @@ class FileLoggingService {
     // Adjust the number of '=' characters to maintain 70 characters.
     final baseCharacterQuantity =
         endFormat.length + instance.id.toString().length + duration.length + 30;
-    var endingEquals = '=';
+    var endingEquals = '='; // Should always have at least one '=' at the end 
+                            // even if 70 characters are exceeded, to maintain visual consistency. 
     if (baseCharacterQuantity < 70) {
       endingEquals = '=' * (70 - baseCharacterQuantity);
     }
