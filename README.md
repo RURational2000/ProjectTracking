@@ -9,7 +9,8 @@ text editor) independent of the app.
 
 - **Project Management**: Create and select projects to track time spent.
   Projects may also be regular blocks of time such as 'Morning Chores' or
-  'Catch Up on Emails'. Projects may be renamed or deleted.
+  'Catch Up on Emails'. 
+  Projects may be renamed or deleted. If renamed,then a new text file is created with the new name.  If deleted, the associated text file remains.
 - **Instance Tracking**: Start/stop work sessions (instances) with automatic
   time accumulation.
 - **Time Display Modes**: View project time as current instance, daily, weekly,
